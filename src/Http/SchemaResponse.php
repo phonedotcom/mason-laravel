@@ -1,8 +1,8 @@
 <?php
 namespace PhoneCom\Mason\Http;
 
-use App\Libraries\JsonSchema\RootSchema;
-use App\Libraries\JsonSchema\SubSchema;
+use PhoneCom\Mason\Schema\JsonSchema;
+use PhoneCom\Mason\Schema\SubSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -22,10 +22,10 @@ class SchemaResponse extends JsonResponse
         }
 
         if ($document === null) {
-            $document = new RootSchema();
+            $document = new JsonSchema();
 
-        } elseif (!$document instanceof RootSchema) {
-            throw new \InvalidArgumentException(sprintf('Document is not an instance of %s', RootSchema::class));
+        } elseif (!$document instanceof JsonSchema) {
+            throw new \InvalidArgumentException(sprintf('Document is not an instance of %s', JsonSchema::class));
         }
 
         $document->setId('/' . ltrim($request->path(), '/'));

@@ -1,7 +1,7 @@
 <?php
 namespace PhoneCom\Mason\Http;
 
-use App\Libraries\Mason\MasonCollection;
+use PhoneCom\Mason\Builder\Contrib\MasonCollection;
 use Illuminate\Http\Request;
 use PhoneCom\Mason\Builder\Document;
 use Illuminate\Http\JsonResponse;

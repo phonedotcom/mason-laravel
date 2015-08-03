@@ -1,6 +1,6 @@
 <?php namespace PhoneCom\Mason\Routing;
 
-use App\Libraries\JsonSchema\RootSchema;
+use PhoneCom\Mason\Schema\JsonSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use PhoneCom\Mason\Http\SchemaResponse;
@@ -28,7 +28,7 @@ trait SchemaServiceTrait
         return Response::create('', 200, ['Allow' => 'GET,HEAD']);
     }
 
-    protected function makeSchemaResponse(RootSchema $schema, Request $request, $status = 200, array $headers = [])
+    protected function makeSchemaResponse(JsonSchema $schema, Request $request, $status = 200, array $headers = [])
     {
         $schema->id = $request->url();
 
