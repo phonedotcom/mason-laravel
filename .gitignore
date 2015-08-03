@@ -1,0 +1,10 @@
+/vendor
+composer.lock
+/coverage
+/examples
+
+# IDE's
+.idea
+.project
+.buildpath
+.settings
