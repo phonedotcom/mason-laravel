@@ -9,6 +9,7 @@ use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Validator;
 use PhoneCom\Mason\Builder\Child;
 use PhoneCom\Mason\Builder\Document;
+use PhoneCom\Sdk\Models\ModelQueryBuilder;
 
 class MasonCollection extends Document
 {
@@ -32,7 +33,7 @@ class MasonCollection extends Document
     ];
 
     /**
-     * @var Builder|BaseCollection
+     * @var Builder|ModelQueryBuilder|BaseCollection
      */
     private $data;
 
@@ -52,7 +53,7 @@ class MasonCollection extends Document
 
     /**
      * @param Request $request HTTP request
-     * @param Collection|Builder $data Eloquent query for retrieving items, or Collection of already retrieved items
+     * @param mixed $data Eloquent query for retrieving items, or list of already retrieved items
      */
     public function __construct(Request $request, $data)
     {
@@ -60,10 +61,11 @@ class MasonCollection extends Document
 
         $this->request = $request;
 
-        if (!$data instanceof Builder && !$data instanceof BaseCollection) {
+        if (!is_array($data) && !$data instanceof Builder && !$data instanceof BaseCollection && !$data instanceof ModelQueryBuilder) {
             throw new \InvalidArgumentException(sprintf(
-                'Data is not an instance of %s or %s, "%s" given instead',
+                'Data is not an instance of array, %s, %s, or %s, "%s" given instead',
                 Builder::class,
+                ModelQueryBuilder::class,
                 BaseCollection::class,
                 gettype($data)
             ));
@@ -277,7 +279,7 @@ class MasonCollection extends Document
 
     private function applySorting()
     {
-        if (!$this->data instanceof Builder) {
+        if (!$this->data instanceof Builder && !$this->data instanceof ModelQueryBuilder) {
             return;
         }
 
@@ -343,7 +345,7 @@ class MasonCollection extends Document
 
     private function applyFilter($column, $operator, array $params)
     {
-        if (!$this->data instanceof Builder) {
+        if (!$this->data instanceof Builder && !$this->data instanceof ModelQueryBuilder) {
             return;
         }
 
@@ -473,14 +475,13 @@ class MasonCollection extends Document
 
     private function getQueryResults()
     {
-        if ($this->data instanceof BaseCollection) {
+        if (is_array($this->data) || $this->data instanceof BaseCollection) {
             $assembledItems = $this->getRenderedItemList($this->data);
-            $total = $this->data->count();
+            $total = count($this->data);
             $offset = 0;
             $limit = $total;
 
-        } elseif ($this->data instanceof Builder) {
-            $total = $this->data->getQuery()->getCountForPagination();
+        } elseif ($this->data instanceof Builder || $this->data instanceof ModelQueryBuilder) {
 
             if ($this->request->has('page_size')) {
                 $limit = (int)$this->request->input('page_size');
@@ -494,10 +495,20 @@ class MasonCollection extends Document
                 $offset = (int)$this->request->input('offset', 0);
             }
 
-            $pageOfItems = $this->data
-                ->skip($offset)
-                ->take($limit)
-                ->get();
+            if ($this->data instanceof ModelQueryBuilder) {
+                list($pageOfItems, $total) = $this->data
+                    ->skip($offset)
+                    ->take($limit)
+                    ->getWithTotal();
+
+            } else {
+                $total = $this->data->getQuery()->getCountForPagination();
+
+                $pageOfItems = $this->data
+                    ->skip($offset)
+                    ->take($limit)
+                    ->get();
+            }
 
             $assembledItems = $this->getRenderedItemList($pageOfItems);
         }
@@ -505,7 +516,7 @@ class MasonCollection extends Document
         return [$assembledItems, $total, $offset, $limit];
     }
 
-    private function getRenderedItemList(Collection $items)
+    private function getRenderedItemList($items)
     {
         $assembledItems = new Collection();
         foreach ($items as $index => $item) {
@@ -513,8 +524,11 @@ class MasonCollection extends Document
                 $childItem = new Child();
                 call_user_func_array($this->itemRenderer, [$childItem, $item]);
 
-            } else {
+            } elseif (is_object($item) && method_exists($item, 'toFullMason')) {
                 $childItem = $item->toFullMason($this);
+
+            } else {
+                $childItem = $item;
             }
 
             $assembledItems->add($childItem);
