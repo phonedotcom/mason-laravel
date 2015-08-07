@@ -177,7 +177,9 @@ trait MasonServiceTrait
             $document->setControl('self', static::getMasonControl($routeParams));
         }
 
-        $document->addNamespace(self::$curieNamespace, '/schemas/');
+        if (method_exists($this, 'addDefaultMasonNamespace')) {
+            $this->addDefaultMasonNamespace($document);
+        }
 
         return MasonResponse::create($document, $request, $status, $headers, JSON_UNESCAPED_SLASHES);
     }
