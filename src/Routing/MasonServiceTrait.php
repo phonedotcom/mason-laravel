@@ -129,7 +129,7 @@ trait MasonServiceTrait
 
     public static function getRelation()
     {
-        return self::$curieNamespace . ':' . self::getSchemaSlug();
+        return static::$curieNamespace . ':' . static::getSchemaSlug();
     }
 
     protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [])
@@ -164,7 +164,7 @@ trait MasonServiceTrait
 
         if (method_exists($this, 'outputSchema') || method_exists($this, 'schema')) {
             $url = (method_exists($this, 'schema') ? static::getSchemaUrl() : static::getOutputSchemaUrl());
-            $document->setMetaProperty('profile', $url)
+            $document->setMetaProperty('relation', static::getRelation())
                 ->setControl('profile', new Control($url, ['output' => [SchemaResponse::MIME_TYPE]]));
 
             if (isset($headers['Link']) && !is_array($headers['Link'])) {
