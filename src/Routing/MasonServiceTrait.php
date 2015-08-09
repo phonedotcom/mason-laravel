@@ -45,9 +45,23 @@ trait MasonServiceTrait
             }
         }
 
-        if (!isset($router->getRoutes()['OPTIONS'.$path])) {
+        if (!self::pathIsRegistered($router, $path)) {
             $router->options($path, ['uses' => "$class@options"]);
         }
+    }
+
+    private static function pathIsRegistered($router, $path)
+    {
+        if ($router instanceof Router) {
+            foreach ($router->getRoutes() as $route) {
+                if (in_array('OPTIONS', $route->getMethods()) && $route->getPath() == $path) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return isset($router->getRoutes()['OPTIONS'.$path]);
     }
 
     private static function getSchemaSlug()
