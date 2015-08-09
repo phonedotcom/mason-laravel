@@ -65,8 +65,13 @@ trait MasonServiceTrait
     {
         $properties = [];
 
-        if (!empty(static::$title)) {
-            $properties['title'] = static::$title;
+        foreach ([
+            'title', 'description', 'isHrefTemplate', 'schemaUrl', 'schema', 'template', 'accept',
+            'output', 'encoding', 'jsonFile', 'files', 'alt'
+        ] as $property) {
+            if (!empty(static::$property)) {
+                $properties[$property] = static::$property;
+            }
         }
 
         $isGet = (strtoupper(static::$verb) == 'GET');
@@ -74,11 +79,12 @@ trait MasonServiceTrait
             $properties['method'] = strtoupper(static::$verb);
         }
 
-        $reflection = new \ReflectionClass(get_called_class());
-        if ($reflection->hasMethod('inputs')) {
-            $properties['schemaUrl'] = route(static::getInputSchemaRouteName());
+        if (in_array('inputSchema', get_class_methods(static::class))) {
+            if (!isset($properties['schemaUrl'])) {
+                $properties['schemaUrl'] = route(static::getInputSchemaRouteName());
+            }
 
-            if (!$isGet) {
+            if (!$isGet && !isset($properties['encoding'])) {
                 $properties['encoding'] = (empty(static::$encoding) ? 'json' : static::$encoding);
             }
         }
