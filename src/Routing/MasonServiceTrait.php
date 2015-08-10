@@ -207,7 +207,8 @@ trait MasonServiceTrait
 
     protected function makeSchemaResponse(JsonSchema $schema, Request $request, $status = 200, array $headers = [])
     {
+        $schema->id = $request->fullUrl() . '#';
+
         return SchemaResponse::create($schema, $request, $status, $headers);
     }
-
 }

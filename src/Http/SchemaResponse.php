@@ -15,26 +15,31 @@ class SchemaResponse extends JsonResponse
         return new static($document, $request, $status, $headers, $options);
     }
 
-    public function __construct($document = null, $request = null, $status = 200, $headers = [], $options = 0)
+    public function __construct($schema = null, $request = null, $status = 200, $headers = [], $options = 0)
     {
         if (!$request instanceof Request) {
             throw new \InvalidArgumentException(sprintf('Request is not an instance of %s', Request::class));
         }
 
-        if ($document === null) {
-            $document = new JsonSchema();
+        if ($schema === null) {
+            $schema = new JsonSchema();
 
-        } elseif (!$document instanceof JsonSchema) {
+        } elseif (!$schema instanceof JsonSchema) {
             throw new \InvalidArgumentException(sprintf('Document is not an instance of %s', JsonSchema::class));
         }
 
-        $document->setId('/' . ltrim($request->path(), '/'));
-        $options += JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT;
+        $options |= JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT;
 
-        SubSchema::sortSchemaProperties($document);
+        $schema->setSchema('http://json-schema.org/draft-04/schema#');
+
+        $schema->sort([
+            'id', '$schema', 'title', 'description', 'type', 'properties', 'patternProperties',
+            'required', 'additionalProperties', '{data}'
+        ]);
+
         $headers['Content-Type'] = self::MIME_TYPE;
 
-        parent::__construct($document, $status, $headers, $options);
+        parent::__construct($schema, $status, $headers, $options);
 
         $this->applyEtag($request);
     }

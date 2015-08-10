@@ -1,5 +1,6 @@
 <?php namespace PhoneCom\Mason\Routing;
 
+use Illuminate\Routing\Router;
 use PhoneCom\Mason\Schema\JsonSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -18,9 +19,23 @@ trait SchemaServiceTrait
 
         $router->get($path, ['as' => static::$routeName, 'uses' => "$class@schema"]);
 
-        if (!isset($router->getRoutes()['OPTIONS'.$path])) {
+        if (!self::pathIsRegistered($router, $path)) {
             $router->options($path, ['uses' => "$class@options"]);
         }
+    }
+
+    private static function pathIsRegistered($router, $path)
+    {
+        if ($router instanceof Router) {
+            foreach ($router->getRoutes() as $route) {
+                if (in_array('OPTIONS', $route->getMethods()) && $route->getPath() == $path) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return isset($router->getRoutes()['OPTIONS'.$path]);
     }
 
     public function options(Request $request)
@@ -30,13 +45,13 @@ trait SchemaServiceTrait
 
     protected function makeSchemaResponse(JsonSchema $schema, Request $request, $status = 200, array $headers = [])
     {
-        $schema->id = $request->url();
+        $schema->id = $request->fullUrl() . '#';
 
         return SchemaResponse::create($schema, $request, $status, $headers);
     }
 
     public static function getUrl($name)
     {
-        return route(static::$routeName) . '#/definitions/' . $name;
+        return route(static::$routeName) . "#/definitions/$name";
     }
 }

@@ -11,8 +11,12 @@ class CollectionInputSchema extends JsonSchema
         parent::__construct($request, $properties);
 
         $this
-            ->setOptionalProperty('page', 'integer', 'Page number', ['default' => 1])
-            ->setOptionalProperty('page_size', 'integer', 'Maximum number of items per page', [
+            ->setOptionalProperty('page', 'integer', [
+                'title' => 'Page number',
+                'default' => 1
+            ])
+            ->setOptionalProperty('page_size', 'integer', [
+                'title' => 'Maximum number of items per page',
                 'default' => MasonCollection::DEFAULT_PER_PAGE,
                 'maximum' => MasonCollection::MAX_PER_PAGE
             ]);
