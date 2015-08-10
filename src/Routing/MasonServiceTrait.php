@@ -1,5 +1,6 @@
 <?php namespace PhoneCom\Mason\Routing;
 
+use Illuminate\Routing\Router;
 use PhoneCom\Mason\Schema\JsonSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
