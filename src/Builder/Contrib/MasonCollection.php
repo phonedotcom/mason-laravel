@@ -162,30 +162,32 @@ class MasonCollection extends Document
 
     private function applyPagination($totalItems, $offset, $limit)
     {
-        $totalPages = ceil($totalItems / $limit);
-        $currentPage = ceil(($offset + 1) / $limit);
-
         $this->setProperties([
             'total' => $totalItems,
-            'page' => $currentPage,
-            'page_size' => $limit,
-            'total_pages' => $totalPages,
             'offset' => $offset,
             'limit' => $limit
         ]);
 
+        $totalPages = ceil($totalItems / $limit);
+        $currentPage = ceil(($offset + 1) / $limit);
+
         if ($totalPages > 1) {
-            $this->setControl('first', $this->url(1));
+            $this->setControl('first', $this->url($this->pageNumToOffset(1, $limit)));
         }
         if ($currentPage > 1) {
-            $this->setControl('prev', $this->url($currentPage - 1));
+            $this->setControl('prev', $this->url($this->pageNumToOffset($currentPage - 1, $limit)));
         }
         if ($currentPage < $totalPages) {
-            $this->setControl('next', $this->url($currentPage + 1));
+            $this->setControl('next', $this->url($this->pageNumToOffset($currentPage + 1, $limit)));
         }
         if ($totalPages > 1) {
-            $this->setControl('last', $this->url($totalPages));
+            $this->setControl('last', $this->url($this->pageNumToOffset($totalPages, $limit)));
         }
+    }
+
+    private function pageNumToOffset($page, $limit)
+    {
+        return ($page - 1) * $limit;
     }
 
     private function assertValidInputs()
@@ -193,8 +195,6 @@ class MasonCollection extends Document
         $rules = [
             'limit' => 'sometimes|integer|min:1|max:' . self::MAX_PER_PAGE,
             'offset' => 'sometimes|integer|min:0',
-            'page' => 'sometimes|integer|min:1',
-            'page_size' => 'integer|min:1|max:' . self::MAX_PER_PAGE,
             'sort' => 'sorting:' . join(',', $this->getValidSortTypes()),
         ];
 
@@ -455,22 +455,12 @@ class MasonCollection extends Document
         }
     }
 
-    private function url($page)
+    private function url($offset)
     {
-        $parameters = [];
-        $queryString = parse_url($this->request->fullUrl(), PHP_URL_QUERY);
-        if ($queryString) {
-            parse_str($queryString, $parameters);
-        }
-        $parameters['page'] = $page;
+        $parameters = $this->request->query->all();
+        $parameters['offset'] = $offset;
 
-        return $this->urlWithoutQueryArgs() . '?' . http_build_query($parameters);
-    }
-
-    private function urlWithoutQueryArgs()
-    {
-        $parts = parse_url($this->request->fullUrl());
-        return '/' . ltrim(@$parts['path'], '/');
+        return $this->request->url() . '?' . http_build_query($parameters);
     }
 
     private function getQueryResults()

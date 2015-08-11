@@ -10,9 +10,9 @@ class SchemaResponse extends JsonResponse
 {
     const MIME_TYPE = 'application/schema+json';
 
-    public static function create($document = null, $request = null, $status = 200, $headers = [], $options = 0)
+    public static function create($schema = null, $request = null, $status = 200, $headers = [], $options = 0)
     {
-        return new static($document, $request, $status, $headers, $options);
+        return new static($schema, $request, $status, $headers, $options);
     }
 
     public function __construct($schema = null, $request = null, $status = 200, $headers = [], $options = 0)
@@ -34,7 +34,7 @@ class SchemaResponse extends JsonResponse
 
         $schema->sort([
             'id', '$schema', 'title', 'description', 'type', 'properties', 'patternProperties',
-            'required', 'additionalProperties', '{data}'
+            'required', 'additionalProperties', '{data}', '@meta', '@controls', '@error', '@namespaces'
         ]);
 
         $headers['Content-Type'] = self::MIME_TYPE;
