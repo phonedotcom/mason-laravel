@@ -250,13 +250,11 @@ class MasonCollection extends Document
         Validator::extend('filterParamCount', function ($attribute, $value, $parameters) {
             list($operator, $params) = self::parseFilterItem($value);
 
-            if ($this->validateFilterOperator($attribute, $value, $parameters)) {
-                $parameterCount = count($params);
-                if (!isset($this->filterOperators[$parameterCount])
-                    || !in_array($operator, $this->filterOperators[$parameterCount])
-                ) {
-                    return false;
-                }
+            $parameterCount = count($params);
+            if (!isset($this->filterOperators[$parameterCount])
+                || !in_array($operator, $this->filterOperators[$parameterCount])
+            ) {
+                return false;
             }
 
             return true;
