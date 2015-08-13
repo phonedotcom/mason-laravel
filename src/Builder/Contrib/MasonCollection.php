@@ -360,10 +360,16 @@ class MasonCollection extends Document
 
     private function applyFilter($column, $operator, array $params)
     {
-        if (!$this->data instanceof Builder && !$this->data instanceof ModelQueryBuilder) {
-            return;
-        }
+        if ($this->data instanceof Builder) {
+            $this->applyEloquentFilter($column, $operator, $params);
 
+        } elseif ($this->data instanceof ModelQueryBuilder) {
+            $this->applySdkFilter($column, $operator, $params);
+        }
+    }
+
+    private function applyEloquentFilter($column, $operator, array $params)
+    {
         $index = array_search($column, $this->allowedFilterTypes);
         if (!is_numeric($index)) {
             $column = $index;
@@ -402,7 +408,6 @@ class MasonCollection extends Document
                     $query->where($column, '!=', $params[0])
                         ->orWhereNull($column);
                 });
-
                 break;
 
             case 'lt':
@@ -467,6 +472,52 @@ class MasonCollection extends Document
                 });
                 break;
 
+        }
+    }
+
+    private function applySdkFilter($column, $operator, array $params)
+    {
+        switch ($operator) {
+            // Zero-parameter operators
+
+            // TODO: Does this actually work, translating these to "eq" and "ne" filters?? More tests needed.
+
+            case 'empty':
+                $this->data->where($column, 'eq', '');
+                break;
+
+            case 'not-empty':
+                $this->data->where($column, 'ne', '');
+                break;
+
+            // Single-parameter operators
+
+            case 'eq':
+            case 'ne':
+            case 'lt':
+            case 'gt':
+            case 'lte':
+            case 'gte':
+            case 'starts-with':
+            case 'ends-with':
+            case 'contains':
+            case 'not-starts-with':
+            case 'not-ends-with':
+            case 'not-contains':
+                $this->data->where($column, $operator, $params[0]);
+                break;
+
+            // Dual-parameter operators
+
+            // TODO: Does this actually work, trying to do a straight pass-through? More tests needed.
+
+            case 'between':
+                $this->data->whereBetween($column, $params);
+                break;
+
+            case 'not-between':
+                $this->data->whereNotBetwween($column, $params);
+                break;
         }
     }
 
