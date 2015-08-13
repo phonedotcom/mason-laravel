@@ -61,7 +61,11 @@ class MasonCollection extends Document
 
         $this->request = $request;
 
-        if (!is_array($data) && !$data instanceof Builder && !$data instanceof BaseCollection && !$data instanceof ModelQueryBuilder) {
+        if (!is_array($data)
+            && !$data instanceof Builder
+            && !$data instanceof BaseCollection
+            && !$data instanceof ModelQueryBuilder
+        ) {
             throw new \InvalidArgumentException(sprintf(
                 'Data is not an instance of array, %s, %s, or %s, "%s" given instead',
                 Builder::class,
