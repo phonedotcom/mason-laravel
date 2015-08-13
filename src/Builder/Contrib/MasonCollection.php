@@ -259,6 +259,17 @@ class MasonCollection extends Document
 
             return true;
         });
+
+        Validator::extend('sorting', function ($attribute, $sort, $allowedSortingTypes) {
+            foreach ($sort as $type => $direction) {
+                if (!in_array($type, $allowedSortingTypes) || !in_array($direction, ['asc', 'desc'])) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
     }
 
     private function getValidSortTypes()
