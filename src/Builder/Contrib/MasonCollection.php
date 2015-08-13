@@ -301,8 +301,10 @@ class MasonCollection extends Document
             if (isset($this->allowedSortTypes[$type])) {
                 $closure = $this->allowedSortTypes[$type];
                 $closure($this->data, $direction);
-            } else {
-                $this->data->orderBy($type, $direction);
+
+            } elseif (($key = array_search($type, $this->allowedSortTypes)) !== false) {
+                $column = (is_numeric($key) ? $type : $key);
+                $this->data->orderBy($column, $direction);
             }
         }
 
