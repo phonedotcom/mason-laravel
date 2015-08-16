@@ -204,7 +204,7 @@ class MasonCollection extends Document
 
         $filters = $this->request->get('filter');
         if ($filters) {
-            $filterTypeString = join(',', array_values($this->allowedFilterTypes));
+            $filterTypeString = join(',', $this->getValidFilterTypes());
             foreach ($filters as $key => $value) {
                 $rules["filter.$key"] = "required|filter_type:$filterTypeString";
 
@@ -276,6 +276,20 @@ class MasonCollection extends Document
 
     }
 
+    private function getValidFilterTypes()
+    {
+        $types = [];
+        foreach ($this->allowedFilterTypes as $index => $value) {
+            if ($value instanceof \Closure) {
+                $types[] = $index;
+            } else {
+                $types[] = $value;
+            }
+        }
+
+        return $types;
+    }
+
     private function getValidSortTypes()
     {
         $types = [];
@@ -318,24 +332,27 @@ class MasonCollection extends Document
         $filters = $this->request->input('filter');
         if ($filters) {
             foreach ($filters as $type => $subfilters) {
-                $this->applySubfilters($type, $subfilters);
+
+                if (is_scalar($subfilters)) {
+                    $subfilters = [$subfilters];
+                }
+
+                foreach ($subfilters as $subfilter) {
+                    list($operator, $params) = self::parseFilterItem($subfilter);
+
+                    if (is_callable(@$this->allowedFilterTypes[$type])) {
+                        $closure = $this->allowedFilterTypes[$type];
+                        $closure($this->data, $operator, $params);
+
+                    } elseif (($key = array_search($type, $this->allowedFilterTypes)) !== false) {
+                        $this->applyFilter($type, $operator, $params);
+                    }
+                }
             }
 
             if ($this->allowedFilterTypes) {
                 $this->setMetaProperty('filter', $filters);
             }
-        }
-    }
-
-    private function applySubfilters($type, $subfilters)
-    {
-        if (is_scalar($subfilters)) {
-            $subfilters = [$subfilters];
-        }
-
-        foreach ($subfilters as $subfilter) {
-            list($operator, $params) = self::parseFilterItem($subfilter);
-            $this->applyFilter($type, $operator, $params);
         }
     }
 
