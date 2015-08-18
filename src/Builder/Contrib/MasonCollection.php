@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Validator;
 use PhoneCom\Mason\Builder\Child;
+use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\Container;
+use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
 use PhoneCom\Mason\Builder\Document;
 use PhoneCom\Sdk\Models\ModelQueryBuilder;
 
@@ -33,9 +35,9 @@ class MasonCollection extends Document
     ];
 
     /**
-     * @var Builder|ModelQueryBuilder|BaseCollection
+     * @var Container
      */
-    private $data;
+    private $container;
 
     private $defaultSorting = [];
     private $allowedFilterTypes = [];
@@ -53,33 +55,33 @@ class MasonCollection extends Document
 
     /**
      * @param Request $request HTTP request
-     * @param mixed $data Eloquent query for retrieving items, or list of already retrieved items
+     * @param Container $container Container for storing or querying the data set
      */
-    public function __construct(Request $request, $data)
+    public function __construct(Request $request, Container $container)
     {
         parent::__construct();
 
         $this->request = $request;
-
-        if (!is_array($data)
-            && !$data instanceof Builder
-            && !$data instanceof BaseCollection
-            && !$data instanceof ModelQueryBuilder
-        ) {
-            throw new \InvalidArgumentException(sprintf(
-                'Data is not an instance of array, %s, %s, or %s, "%s" given instead',
-                Builder::class,
-                ModelQueryBuilder::class,
-                BaseCollection::class,
-                gettype($data)
-            ));
-        }
-        $this->data = $data;
+        $this->container = $container;
     }
 
     public function setFilterTypes(array $allowedTypes)
     {
-        $this->allowedFilterTypes = $allowedTypes;
+        $this->allowedFilterTypes = [];
+        foreach ($allowedTypes as $index => $type) {
+            if ($type instanceof Filter) {
+                $filter = $type;
+
+            } else {
+                $filter = new Filter($type);
+
+                if (!is_numeric($index)) {
+                    $filter->setField($index);
+                }
+            }
+
+            $this->allowedFilterTypes[$filter->getName()] = $filter;
+        }
 
         return $this;
     }
@@ -153,10 +155,20 @@ class MasonCollection extends Document
             $this->applyFiltering();
             $this->applySorting();
 
-            list($assembledItems, $totalItems, $offset, $limit) = $this->getQueryResults();
-            $this->applyPagination($totalItems, $offset, $limit);
+            $limit = (int)$this->request->input('limit', self::DEFAULT_PER_PAGE);
+            if ($limit < 1) {
+                $limit = 1;
+            }
 
-            $this->setProperty('items', $assembledItems->toArray());
+            $offset = (int)$this->request->input('offset', 0);
+            if ($offset < 0) {
+                $offset = 0;
+            }
+
+            list($items, $totalItems) = $this->container->getItems($limit, $offset);
+
+            $this->addPaginationProperties($totalItems, $offset, $limit);
+            $this->setProperty('items', $this->getRenderedItemList($items));
 
             $this->assembled = true;
         }
@@ -164,7 +176,29 @@ class MasonCollection extends Document
         return $this;
     }
 
-    private function applyPagination($totalItems, $offset, $limit)
+    private function getRenderedItemList($rawItems)
+    {
+        $items = [];
+        foreach ($rawItems as $index => $rawItem) {
+            if ($this->itemRenderer) {
+                $item = new Child();
+                call_user_func_array($this->itemRenderer, [$item, $rawItem]);
+
+            } elseif (is_object($rawItem) && method_exists($rawItem, 'toFullMason')) {
+                $item = $rawItem->toFullMason();
+
+            } else {
+                $item = $rawItem;
+            }
+
+            $items[] = $item;
+
+        }
+
+        return $items;
+    }
+
+    private function addPaginationProperties($totalItems, $offset, $limit)
     {
         $this->setProperties([
             'total' => $totalItems,
@@ -189,6 +223,14 @@ class MasonCollection extends Document
         }
     }
 
+    private function url($offset)
+    {
+        $parameters = $this->request->query->all();
+        $parameters['offset'] = $offset;
+
+        return $this->request->url() . '?' . http_build_query($parameters);
+    }
+
     private function pageNumToOffset($page, $limit)
     {
         return ($page - 1) * $limit;
@@ -204,16 +246,23 @@ class MasonCollection extends Document
 
         $filters = $this->request->get('filter');
         if ($filters) {
-            $filterTypeString = join(',', $this->getValidFilterTypes());
+            $filterList = join(',', $this->getValidFilterTypes());
             foreach ($filters as $key => $value) {
-                $rules["filter.$key"] = "required|filter_type:$filterTypeString";
+                $rules["filter.$key"] = "required|filter_type:$filterList";
+
+                $filter = @$this->allowedFilterTypes[$key];
+                if ($filter && $filter->getSupportedOperators()) {
+                    $operatorList = join(',', $filter->getSupportedOperators());
+                } else {
+                    $operatorList = '';
+                }
 
                 if (is_scalar($value)) {
-                    $rules["filter.$key"] .= '|filter_operator|filter_param_count';
+                    $rules["filter.$key"] .= "|filter_operator:$operatorList|filter_param_count";
 
                 } else {
                     foreach ($value as $index => $subvalue) {
-                        $rules["filter.$key.$index"] = 'required|filter_operator|filter_param_count';
+                        $rules["filter.$key.$index"] = "required|filter_operator:$operatorList|filter_param_count";
                     }
                 }
             }
@@ -241,6 +290,10 @@ class MasonCollection extends Document
 
         Validator::extend('filterOperator', function ($attribute, $filters, $parameters) {
             $operator = (strstr($filters, ':', true) ?: $filters);
+
+            if (@$parameters[0]) {
+                return in_array($operator, $parameters);
+            }
 
             foreach ($this->filterOperators as $parameterCount => $operators) {
                 if (in_array($operator, $operators)) {
@@ -278,16 +331,7 @@ class MasonCollection extends Document
 
     private function getValidFilterTypes()
     {
-        $types = [];
-        foreach ($this->allowedFilterTypes as $index => $value) {
-            if ($value instanceof \Closure) {
-                $types[] = $index;
-            } else {
-                $types[] = $value;
-            }
-        }
-
-        return $types;
+        return array_keys($this->allowedFilterTypes);
     }
 
     private function getValidSortTypes()
@@ -306,23 +350,21 @@ class MasonCollection extends Document
 
     private function applySorting()
     {
-        if (!$this->data instanceof Builder && !$this->data instanceof ModelQueryBuilder) {
-            return;
-        }
+        // TODO: Add a Sort class like we did for Filters
 
         $sort = $this->request->input('sort', $this->defaultSorting);
         foreach ($sort as $type => $direction) {
             if (isset($this->allowedSortTypes[$type])) {
                 $closure = $this->allowedSortTypes[$type];
-                $closure($this->data, $direction);
+                $closure($this->container, $direction);
 
             } elseif (($key = array_search($type, $this->allowedSortTypes)) !== false) {
                 $column = (is_numeric($key) ? $type : $key);
-                $this->data->orderBy($column, $direction);
+                $this->container->setSorting($column, $direction);
             }
         }
 
-        if ($this->allowedSortTypes) {
+        if ($sort) {
             $this->setMetaProperty('sort', $sort);
         }
     }
@@ -331,7 +373,9 @@ class MasonCollection extends Document
     {
         $filters = $this->request->input('filter');
         if ($filters) {
-            foreach ($filters as $type => $subfilters) {
+            $this->setMetaProperty('filter', $filters);
+
+            foreach ($filters as $name => $subfilters) {
 
                 if (is_scalar($subfilters)) {
                     $subfilters = [$subfilters];
@@ -339,19 +383,8 @@ class MasonCollection extends Document
 
                 foreach ($subfilters as $subfilter) {
                     list($operator, $params) = self::parseFilterItem($subfilter);
-
-                    if (is_callable(@$this->allowedFilterTypes[$type])) {
-                        $closure = $this->allowedFilterTypes[$type];
-                        $closure($this->data, $operator, $params);
-
-                    } elseif (($key = array_search($type, $this->allowedFilterTypes)) !== false) {
-                        $this->applyFilter($type, $operator, $params);
-                    }
+                    $this->allowedFilterTypes[$name]->apply($this->container, $operator, $params);
                 }
-            }
-
-            if ($this->allowedFilterTypes) {
-                $this->setMetaProperty('filter', $filters);
             }
         }
     }
@@ -375,238 +408,4 @@ class MasonCollection extends Document
         return [$operator, $params];
     }
 
-    private function applyFilter($column, $operator, array $params)
-    {
-        if ($this->data instanceof Builder) {
-            $this->applyEloquentFilter($column, $operator, $params);
-
-        } elseif ($this->data instanceof ModelQueryBuilder) {
-            $this->applySdkFilter($column, $operator, $params);
-        }
-    }
-
-    private function applyEloquentFilter($column, $operator, array $params)
-    {
-        $index = array_search($column, $this->allowedFilterTypes);
-        if (!is_numeric($index)) {
-            $column = $index;
-        }
-
-        $sqlLikeEscapes = [
-            '%' => '\%',
-            '_' => '\_'
-        ];
-
-        switch ($operator) {
-            // Zero-parameter operators
-
-            case 'empty':
-                $this->data->where(function ($query) use ($column) {
-                    $query->whereIn($column, ['', 0])
-                        ->orWhereNull($column);
-                });
-                break;
-
-            case 'not-empty':
-                $this->data->where(function ($query) use ($column) {
-                    $query->whereNotIn($column, ['', 0])
-                        ->whereNotNull($column);
-                });
-                break;
-
-            // Single-parameter operators
-
-            case 'eq':
-                $this->data->where($column, $params[0]);
-                break;
-
-            case 'ne':
-                $this->data->where(function ($query) use ($column, $params) {
-                    $query->where($column, '!=', $params[0])
-                        ->orWhereNull($column);
-                });
-                break;
-
-            case 'lt':
-                $this->data->where($column, '<', $params[0]);
-                break;
-
-            case 'gt':
-                $this->data->where($column, '>', $params[0]);
-                break;
-
-            case 'lte':
-                $this->data->where($column, '<=', $params[0]);
-                break;
-
-            case 'gte':
-                $this->data->where($column, '>=', $params[0]);
-                break;
-
-            case 'starts-with':
-                $this->data->where($column, 'LIKE', strtr($params[0], $sqlLikeEscapes) . '%');
-                break;
-
-            case 'ends-with':
-                $this->data->where($column, 'LIKE', '%' . strtr($params[0], $sqlLikeEscapes));
-                break;
-
-            case 'contains':
-                $this->data->where($column, 'LIKE', '%' . strtr($params[0], $sqlLikeEscapes) . '%');
-                break;
-
-            case 'not-starts-with':
-                $this->data->where(function ($query) use ($column, $params, $sqlLikeEscapes) {
-                    $query->where($column, 'NOT LIKE', strtr($params[0], $sqlLikeEscapes) . '%')
-                        ->orWhereNull($column);
-                });
-                break;
-
-            case 'not-ends-with':
-                $this->data->where(function ($query) use ($column, $params, $sqlLikeEscapes) {
-                    $query->where($column, 'NOT LIKE', '%' . strtr($params[0], $sqlLikeEscapes))
-                        ->orWhereNull($column);
-                });
-                break;
-
-            case 'not-contains':
-                $this->data->where(function ($query) use ($column, $params, $sqlLikeEscapes) {
-                    $query->where($column, 'NOT LIKE', '%' . strtr($params[0], $sqlLikeEscapes) . '%')
-                        ->orWhereNull($column);
-                });
-                break;
-
-            // Dual-parameter operators
-
-            case 'between':
-                $this->data->whereBetween($column, $params);
-                break;
-
-            case 'not-between':
-                $this->data->where(function ($query) use ($column, $params, $sqlLikeEscapes) {
-                    $query->whereNotBetween($column, $params)
-                        ->orWhereNull($column);
-                });
-                break;
-
-        }
-    }
-
-    private function applySdkFilter($column, $operator, array $params)
-    {
-        switch ($operator) {
-            // Zero-parameter operators
-
-            // TODO: Does this actually work, translating these to "eq" and "ne" filters?? More tests needed.
-
-            case 'empty':
-                $this->data->where($column, 'eq', '');
-                break;
-
-            case 'not-empty':
-                $this->data->where($column, 'ne', '');
-                break;
-
-            // Single-parameter operators
-
-            case 'eq':
-            case 'ne':
-            case 'lt':
-            case 'gt':
-            case 'lte':
-            case 'gte':
-            case 'starts-with':
-            case 'ends-with':
-            case 'contains':
-            case 'not-starts-with':
-            case 'not-ends-with':
-            case 'not-contains':
-                $this->data->where($column, $operator, $params[0]);
-                break;
-
-            // Dual-parameter operators
-
-            // TODO: Does this actually work, trying to do a straight pass-through? More tests needed.
-
-            case 'between':
-                $this->data->whereBetween($column, $params);
-                break;
-
-            case 'not-between':
-                $this->data->whereNotBetwween($column, $params);
-                break;
-        }
-    }
-
-    private function url($offset)
-    {
-        $parameters = $this->request->query->all();
-        $parameters['offset'] = $offset;
-
-        return $this->request->url() . '?' . http_build_query($parameters);
-    }
-
-    private function getQueryResults()
-    {
-        if (is_array($this->data) || $this->data instanceof BaseCollection) {
-            $assembledItems = $this->getRenderedItemList($this->data);
-            $total = count($this->data);
-            $offset = 0;
-            $limit = $total;
-
-        } elseif ($this->data instanceof Builder || $this->data instanceof ModelQueryBuilder) {
-
-            if ($this->request->has('page_size')) {
-                $limit = (int)$this->request->input('page_size');
-            } else {
-                $limit = (int)$this->request->input('limit', self::DEFAULT_PER_PAGE);
-            }
-
-            if ($this->request->has('page')) {
-                $offset = (int)$this->request->input('page') * $limit;
-            } else {
-                $offset = (int)$this->request->input('offset', 0);
-            }
-
-            if ($this->data instanceof ModelQueryBuilder) {
-                list($pageOfItems, $total) = $this->data
-                    ->skip($offset)
-                    ->take($limit)
-                    ->getWithTotal();
-
-            } else {
-                $total = $this->data->getQuery()->getCountForPagination();
-
-                $pageOfItems = $this->data
-                    ->skip($offset)
-                    ->take($limit)
-                    ->get();
-            }
-
-            $assembledItems = $this->getRenderedItemList($pageOfItems);
-        }
-
-        return [$assembledItems, $total, $offset, $limit];
-    }
-
-    private function getRenderedItemList($items)
-    {
-        $assembledItems = new Collection();
-        foreach ($items as $index => $item) {
-            if ($this->itemRenderer) {
-                $childItem = new Child();
-                call_user_func_array($this->itemRenderer, [$childItem, $item]);
-
-            } elseif (is_object($item) && method_exists($item, 'toFullMason')) {
-                $childItem = $item->toFullMason($this);
-
-            } else {
-                $childItem = $item;
-            }
-
-            $assembledItems->add($childItem);
-        }
-
-        return $assembledItems;
-    }
 }
