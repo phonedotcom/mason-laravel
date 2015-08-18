@@ -4,7 +4,7 @@ namespace PhoneCom\Mason\Builder\Contrib\MasonCollection\Container;
 use PhoneCom\Sdk\Models\ModelQueryBuilder as Builder;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
 
-class EloquentContainer implements Container
+class PhonecomContainer implements Container
 {
     /**
      * @var Builder
@@ -78,6 +78,6 @@ class EloquentContainer implements Container
 
     public function getItems($limit, $offset)
     {
-        return $this->data->skip($offset)->take($limit)->getWithTotal();
+        return $this->query->skip($offset)->take($limit)->getWithTotal();
     }
 }

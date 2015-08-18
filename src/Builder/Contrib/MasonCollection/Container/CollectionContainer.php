@@ -2,7 +2,7 @@
 namespace PhoneCom\Mason\Builder\Contrib\MasonCollection\Container;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
 
 class CollectionContainer implements Container
@@ -14,6 +14,12 @@ class CollectionContainer implements Container
 
     public function __construct($collection)
     {
+        if (!$collection instanceof Collection) {
+            throw new \InvalidArgumentException(
+                sprintf('Unsupported input, expected an instance of ' . Collection::class)
+            );
+        }
+
         $this->collection = $collection;
     }
 
