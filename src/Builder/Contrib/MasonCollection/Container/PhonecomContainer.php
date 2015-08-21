@@ -1,7 +1,7 @@
 <?php
 namespace PhoneCom\Mason\Builder\Contrib\MasonCollection\Container;
 
-use PhoneCom\Sdk\Models\ModelQueryBuilder as Builder;
+use PhoneCom\Sdk\Api\Eloquent\Builder;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
 
 class PhonecomContainer implements Container
