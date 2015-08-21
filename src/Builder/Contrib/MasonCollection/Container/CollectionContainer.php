@@ -90,6 +90,24 @@ class CollectionContainer implements Container
 
                 case 'not-between':
                     return ($item->{$field} < $params[0] || $item->{$field} > $params[1]);
+
+                // Unlimited-parameter operators
+
+                case 'in':
+                    foreach ($params as $value) {
+                        if ($item->{$field} == $value) {
+                            return true;
+                        }
+                    }
+                    return false;
+
+                case 'not-in':
+                    foreach ($params as $value) {
+                        if ($item->{$field} == $value) {
+                            return false;
+                        }
+                    }
+                    return true;
             }
         });
 

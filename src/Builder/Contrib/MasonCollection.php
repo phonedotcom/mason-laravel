@@ -2,8 +2,6 @@
 namespace PhoneCom\Mason\Builder\Contrib;
 
 use Illuminate\Contracts\Validation\ValidationException;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Validator;
@@ -11,7 +9,6 @@ use PhoneCom\Mason\Builder\Child;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\Container;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
 use PhoneCom\Mason\Builder\Document;
-use PhoneCom\Sdk\Models\ModelQueryBuilder;
 
 class MasonCollection extends Document
 {
@@ -31,7 +28,10 @@ class MasonCollection extends Document
         ],
 
         // two-argument operators
-        2 => ['between', 'not-between']
+        2 => ['between', 'not-between'],
+
+        // unlimited-argument operators
+        'unlimited' => ['in', 'not-in']
     ];
 
     /**
@@ -295,7 +295,7 @@ class MasonCollection extends Document
                 return in_array($operator, $parameters);
             }
 
-            foreach ($this->filterOperators as $parameterCount => $operators) {
+            foreach ($this->filterOperators as $operators) {
                 if (in_array($operator, $operators)) {
                     return true;
                 }
@@ -308,13 +308,14 @@ class MasonCollection extends Document
             list($operator, $params) = self::parseFilterItem($value);
 
             $parameterCount = count($params);
-            if (!isset($this->filterOperators[$parameterCount])
-                || !in_array($operator, $this->filterOperators[$parameterCount])
-            ) {
-                return false;
-            }
 
-            return true;
+            return (
+                in_array($operator, $this->filterOperators['unlimited'])
+                || (
+                    isset($this->filterOperators[$parameterCount])
+                    && in_array($operator, $this->filterOperators[$parameterCount])
+                )
+            );
         });
 
         Validator::extend('sorting', function ($attribute, $sort, $allowedSortingTypes) {

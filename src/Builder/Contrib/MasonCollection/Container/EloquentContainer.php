@@ -135,6 +135,15 @@ class EloquentContainer implements Container
                 });
                 break;
 
+            // Unlimited-parameter operators
+
+            case 'in':
+                $this->query->whereIn($column, $params);
+                break;
+
+            case 'not-in':
+                $this->query->whereNotIn($column, $params);
+                break;
         }
 
         return $this;
