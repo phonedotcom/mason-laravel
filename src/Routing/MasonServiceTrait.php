@@ -145,7 +145,10 @@ trait MasonServiceTrait
             }
         }
 
-        return Response::create('', 200, ['Allow' => join(',', $supportedVerbs)]);
+        $doc = (new Document())
+            ->setProperty('methods', $supportedVerbs);
+
+        return MasonResponse::create($doc, $request, 200, ['Allow' => join(',', $supportedVerbs)]);
     }
 
     public static function getRelation()
