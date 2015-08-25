@@ -10,6 +10,8 @@ class MasonResponse extends JsonResponse
 {
     const MIME_TYPE = 'application/vnd.mason+json';
 
+    private static $defaultHeaders = [];
+
     private static $defaultSorting = [
         '@meta', '@error', '{data}', '@controls', '@namespaces'
     ];
@@ -21,6 +23,11 @@ class MasonResponse extends JsonResponse
     private static $metaSorting = [
         '@title', '@description', 'profile', 'voip_id', 'application_id', '{data}'
     ];
+
+    public static function setDefaultHeaders(array $headers)
+    {
+        self::$defaultHeaders = $headers;
+    }
 
     public static function create($document = null, $request = null, $status = 200, $headers = [], $options = 0)
     {
@@ -43,6 +50,8 @@ class MasonResponse extends JsonResponse
         if ($document instanceof MasonCollection) {
             $document->assemble();
         }
+
+        $headers = array_merge($headers, self::$defaultHeaders);
 
         $this->applyPreferHeader($document, $request, $headers, $options);
         $document->sort(self::$defaultSorting, self::$controlsSorting, self::$metaSorting);

@@ -10,6 +10,13 @@ class SchemaResponse extends JsonResponse
 {
     const MIME_TYPE = 'application/schema+json';
 
+    private static $defaultHeaders = [];
+
+    public static function setDefaultHeaders(array $headers)
+    {
+        self::$defaultHeaders = $headers;
+    }
+
     public static function create($schema = null, $request = null, $status = 200, $headers = [], $options = 0)
     {
         return new static($schema, $request, $status, $headers, $options);
@@ -38,6 +45,7 @@ class SchemaResponse extends JsonResponse
         ]);
 
         $headers['Content-Type'] = self::MIME_TYPE;
+        $headers = array_merge($headers, self::$defaultHeaders);
 
         parent::__construct($schema, $status, $headers, $options);
 
