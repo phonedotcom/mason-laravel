@@ -110,6 +110,11 @@ class Filter
         return $this;
     }
 
+    public function getValidationRules()
+    {
+        return $this->rules;
+    }
+
     public function apply(Container $container, $operator, $params)
     {
         $callable = $this->function;

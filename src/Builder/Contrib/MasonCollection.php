@@ -257,12 +257,18 @@ class MasonCollection extends Document
                     $operatorList = '';
                 }
 
+                $extraRules = "filter_operator:$operatorList|filter_param_count";
+                $filterRules = $filter->getValidationRules();
+                if ($filterRules) {
+                    $extraRules .= "|$filterRules";
+                }
+
                 if (is_scalar($value)) {
-                    $rules["filter.$key"] .= "|filter_operator:$operatorList|filter_param_count";
+                    $rules["filter.$key"] .= "|$extraRules";
 
                 } else {
                     foreach ($value as $index => $subvalue) {
-                        $rules["filter.$key.$index"] = "required|filter_operator:$operatorList|filter_param_count";
+                        $rules["filter.$key.$index"] = "required|$extraRules";
                     }
                 }
             }
