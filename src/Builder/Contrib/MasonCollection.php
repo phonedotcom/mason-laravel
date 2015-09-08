@@ -251,24 +251,26 @@ class MasonCollection extends Document
                 $rules["filter.$key"] = "required|filter_type:$filterList";
 
                 $filter = @$this->allowedFilterTypes[$key];
-                if ($filter && $filter->getSupportedOperators()) {
-                    $operatorList = join(',', $filter->getSupportedOperators());
-                } else {
-                    $operatorList = '';
-                }
+                if ($filter) {
+                    if ($filter->getSupportedOperators()) {
+                        $operatorList = join(',', $filter->getSupportedOperators());
+                    } else {
+                        $operatorList = '';
+                    }
 
-                $extraRules = "filter_operator:$operatorList|filter_param_count";
-                $filterRules = $filter->getValidationRules();
-                if ($filterRules) {
-                    $extraRules .= "|$filterRules";
-                }
+                    $extraRules = "filter_operator:$operatorList|filter_param_count";
+                    $filterRules = $filter->getValidationRules();
+                    if ($filterRules) {
+                        $extraRules .= "|$filterRules";
+                    }
 
-                if (is_scalar($value)) {
-                    $rules["filter.$key"] .= "|$extraRules";
+                    if (is_scalar($value)) {
+                        $rules["filter.$key"] .= "|$extraRules";
 
-                } else {
-                    foreach ($value as $index => $subvalue) {
-                        $rules["filter.$key.$index"] = "required|$extraRules";
+                    } else {
+                        foreach ($value as $index => $subvalue) {
+                            $rules["filter.$key.$index"] = "required|$extraRules";
+                        }
                     }
                 }
             }
@@ -285,6 +287,10 @@ class MasonCollection extends Document
 
     private function extendValidator()
     {
+        Validator::extend('filterEnum', function ($attribute, $value, $parameters) {
+            return (preg_match("/^\w+\:(" . join('|', $parameters) . ")/", $value));
+        });
+
         Validator::extend('filterType', function ($attribute, $clause, $allowedFilterTypes) {
             $type = substr($attribute, strrpos($attribute, '.') + 1);
             if (!in_array($type, $allowedFilterTypes)) {
