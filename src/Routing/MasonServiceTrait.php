@@ -1,5 +1,8 @@
 <?php namespace PhoneCom\Mason\Routing;
 
+use Route as LaravelRoute;
+use Illuminate\Foundation\Application;
+use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use PhoneCom\Mason\Schema\JsonSchema;
 use Illuminate\Http\Request;
@@ -129,18 +132,39 @@ trait MasonServiceTrait
 
     public function options(Request $request)
     {
-        $app = app();
-
         $supportedVerbs = [];
-        $currentPathInfo = $request->getPathInfo();
-        foreach (array_keys($app->getRoutes()) as $key) {
-            $verb = strstr($key, '/', true);
-            $pathInfo = strstr($key, '/');
 
-            if ($pathInfo == $currentPathInfo && $verb != 'OPTIONS') {
-                $supportedVerbs[] = $verb;
-                if ($verb == 'GET') {
-                    $supportedVerbs[] = 'HEAD';
+        if (app() instanceof Application) {
+            $currentPathInfo = LaravelRoute::current()->getPath();
+
+            $router = app('Illuminate\\Routing\\Router');
+
+            foreach ($router->getRoutes() as $route) {
+                if ($route->getPath() == $currentPathInfo) {
+                    $supportedVerbs = array_merge($supportedVerbs, $route->getMethods());
+                }
+            }
+            if (in_array('GET', $supportedVerbs) && !in_array('HEAD', $supportedVerbs)) {
+                $supportedVerbs[] = 'HEAD';
+            }
+            $index = array_search('OPTIONS', $supportedVerbs);
+            if ($index !== false) {
+                unset($supportedVerbs[$index]);
+                $supportedVerbs = array_values($supportedVerbs);
+            }
+
+        } else {
+
+            $currentPathInfo = $request->getPathInfo();
+            foreach (array_keys(app()->getRoutes()) as $key) {
+                $verb = strstr($key, '/', true);
+                $pathInfo = strstr($key, '/');
+
+                if ($pathInfo == $currentPathInfo && $verb != 'OPTIONS') {
+                    $supportedVerbs[] = $verb;
+                    if ($verb == 'GET') {
+                        $supportedVerbs[] = 'HEAD';
+                    }
                 }
             }
         }
