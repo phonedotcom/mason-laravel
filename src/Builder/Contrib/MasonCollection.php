@@ -408,7 +408,7 @@ class MasonCollection extends Document
         $offset = strpos($filter, ':');
         $paramString = ($offset !== false ? substr($filter, $offset + 1) : '');
 
-        if ($paramString) {
+        if ($paramString !== '') {
             $paramString = str_replace('\,', '|#$DELIMITER$#|', $paramString);
             $params = explode(',', $paramString);
             array_walk($params, function (&$value) {
