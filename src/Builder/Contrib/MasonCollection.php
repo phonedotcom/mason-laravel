@@ -394,6 +394,7 @@ class MasonCollection extends Document
     public static function parseFilterItem($filter)
     {
         $parts = explode(':', $filter);
+
         $operator = array_shift($parts);
         $paramString = join(':', $parts);
 
@@ -409,7 +410,7 @@ class MasonCollection extends Document
             $paramString = $filter;
         }
 
-        if ($paramString) {
+        if ($paramString !== '') {
             $paramString = str_replace('\,', '|#$DELIMITER$#|', $paramString);
             $params = explode(',', $paramString);
             array_walk($params, function (&$value) {
