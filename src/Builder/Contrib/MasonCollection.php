@@ -17,7 +17,7 @@ class MasonCollection extends Document
 
     private $assembled = false;
 
-    private $filterOperators = [
+    private static $filterOperators = [
         // zero-argument operators
         0 => ['empty', 'not-empty'],
 
@@ -252,13 +252,8 @@ class MasonCollection extends Document
 
                 $filter = @$this->allowedFilterTypes[$key];
                 if ($filter) {
-                    if ($filter->getSupportedOperators()) {
-                        $operatorList = join(',', $filter->getSupportedOperators());
-                    } else {
-                        $operatorList = '';
-                    }
 
-                    $extraRules = "filter_operator:$operatorList|filter_param_count";
+                    $extraRules = "filter_param_count";
                     $filterRules = $filter->getValidationRules();
                     if ($filterRules) {
                         $extraRules .= "|$filterRules";
@@ -300,32 +295,16 @@ class MasonCollection extends Document
             return true;
         });
 
-        Validator::extend('filterOperator', function ($attribute, $filters, $parameters) {
-            $operator = (strstr($filters, ':', true) ?: $filters);
-
-            if (@$parameters[0]) {
-                return in_array($operator, $parameters);
-            }
-
-            foreach ($this->filterOperators as $operators) {
-                if (in_array($operator, $operators)) {
-                    return true;
-                }
-            }
-
-            return false;
-        });
-
         Validator::extend('filterParamCount', function ($attribute, $value, $parameters) {
             list($operator, $params) = self::parseFilterItem($value);
 
             $parameterCount = count($params);
 
             return (
-                in_array($operator, $this->filterOperators['unlimited'])
+                in_array($operator, self::$filterOperators['unlimited'])
                 || (
-                    isset($this->filterOperators[$parameterCount])
-                    && in_array($operator, $this->filterOperators[$parameterCount])
+                    isset(self::$filterOperators[$parameterCount])
+                    && in_array($operator, self::$filterOperators[$parameterCount])
                 )
             );
         });
@@ -404,11 +383,23 @@ class MasonCollection extends Document
 
     public static function parseFilterItem($filter)
     {
-        $operator = (strstr($filter, ':', true) ?: $filter);
-        $offset = strpos($filter, ':');
-        $paramString = ($offset !== false ? substr($filter, $offset + 1) : '');
+        $parts = explode(':', $filter);
+        $operator = array_shift($parts);
+        $paramString = join(':', $parts);
 
-        if ($paramString !== '') {
+        $foundOperator = false;
+        foreach (self::$filterOperators as $paramCount => $operators) {
+            if (in_array($operator, $operators)) {
+                $foundOperator = true;
+                break;
+            }
+        }
+        if (!$foundOperator) {
+            $operator = 'eq';
+            $paramString = $filter;
+        }
+
+        if ($paramString) {
             $paramString = str_replace('\,', '|#$DELIMITER$#|', $paramString);
             $params = explode(',', $paramString);
             array_walk($params, function (&$value) {
