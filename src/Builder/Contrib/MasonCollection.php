@@ -244,11 +244,11 @@ class MasonCollection extends Document
             'sort' => 'sorting:' . join(',', $this->getValidSortTypes()),
         ];
 
-        $filters = $this->request->get('filter');
+        $filters = $this->request->get('filters');
         if ($filters) {
             $filterList = join(',', $this->getValidFilterTypes());
             foreach ($filters as $key => $value) {
-                $rules["filter.$key"] = "required|filter_type:$filterList";
+                $rules["filters.$key"] = "required|filter_type:$filterList";
 
                 $filter = @$this->allowedFilterTypes[$key];
                 if ($filter) {
@@ -265,11 +265,11 @@ class MasonCollection extends Document
                     }
 
                     if (is_scalar($value)) {
-                        $rules["filter.$key"] .= "|$extraRules";
+                        $rules["filters.$key"] .= "|$extraRules";
 
                     } else {
                         foreach ($value as $index => $subvalue) {
-                            $rules["filter.$key.$index"] = "required|$extraRules";
+                            $rules["filters.$key.$index"] = "required|$extraRules";
                         }
                     }
                 }
@@ -384,9 +384,9 @@ class MasonCollection extends Document
 
     private function applyFiltering()
     {
-        $filters = $this->request->input('filter');
+        $filters = $this->request->input('filters');
         if ($filters) {
-            $this->setMetaProperty('filter', $filters);
+            $this->setMetaProperty('filters', $filters);
 
             foreach ($filters as $name => $subfilters) {
 
