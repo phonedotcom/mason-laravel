@@ -5,6 +5,7 @@ use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\MessageBag;
 use PhoneCom\Mason\Builder\Child;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\Container;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
@@ -238,6 +239,15 @@ class MasonCollection extends Document
 
     private function assertValidInputs()
     {
+        $unsupported = $this->request->except(['limit', 'offset', 'sort', 'filters']);
+        if ($unsupported) {
+            $messages = [];
+            foreach ($unsupported as $property => $value) {
+                $messages[$property] = ['Unsupported input parameter'];
+            }
+            throw new ValidationException(new MessageBag($messages));
+        }
+
         $rules = [
             'limit' => 'sometimes|integer|min:1|max:' . self::MAX_PER_PAGE,
             'offset' => 'sometimes|integer|min:0',
