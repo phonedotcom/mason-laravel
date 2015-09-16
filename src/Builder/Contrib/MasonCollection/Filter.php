@@ -119,7 +119,7 @@ class Filter
     {
         $callable = $this->function;
         if ($callable) {
-            $callable($container, $operator, $params);
+            $callable($container, $operator, $params, $this);
 
         } else {
             $container->applyFilter($this, $operator, $params);
