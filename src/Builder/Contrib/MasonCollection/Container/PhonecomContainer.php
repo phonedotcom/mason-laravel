@@ -42,9 +42,11 @@ class PhonecomContainer implements Container
             // Zero-parameter operators
 
             case 'empty':
+                $this->query->whereEmpty($field);
+                break;
+
             case 'not-empty':
-                throw new \Exception('Not supported yet');
-                //$this->query->where($field, 'ne', '');
+                $this->query->whereNotEmpty($field);
                 break;
 
             // Single-parameter operators
@@ -70,6 +72,13 @@ class PhonecomContainer implements Container
             case 'not-between':
                 throw new \Exception('Not supported yet');
                 //$this->query->whereBetween($field, $params);
+                break;
+
+            // Unlimited-parameter operators
+
+            case 'in':
+            case 'not-in':
+                throw new \Exception('Not supported yet');
                 break;
         }
 
