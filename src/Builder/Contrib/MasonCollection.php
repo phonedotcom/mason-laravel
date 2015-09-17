@@ -66,6 +66,11 @@ class MasonCollection extends Document
         $this->container = $container;
     }
 
+    public static function getSupportedQueryParamNames()
+    {
+        return ['limit', 'offset', 'sort', 'filters'];
+    }
+
     public function setFilterTypes(array $allowedTypes)
     {
         $this->allowedFilterTypes = [];
@@ -239,23 +244,15 @@ class MasonCollection extends Document
 
     private function assertValidInputs()
     {
-        $unsupported = $this->request->except(['limit', 'offset', 'sort', 'filters']);
-        if ($unsupported) {
-            $messages = [];
-            foreach ($unsupported as $property => $value) {
-                $messages[$property] = ['Unsupported input parameter'];
-            }
-            throw new ValidationException(new MessageBag($messages));
-        }
-
         $rules = [
             'limit' => 'sometimes|integer|min:1|max:' . self::MAX_PER_PAGE,
             'offset' => 'sometimes|integer|min:0',
-            'sort' => 'sorting:' . join(',', $this->getValidSortTypes()),
+            'sort' => 'sometimes|array|sorting:' . join(',', $this->getValidSortTypes()),
+            'filters' => 'sometimes|array'
         ];
 
         $filters = $this->request->get('filters');
-        if ($filters) {
+        if ($filters && is_array($filters)) {
             $filterList = join(',', $this->getValidFilterTypes());
             foreach ($filters as $key => $value) {
                 $rules["filters.$key"] = "required|filter_type:$filterList";
