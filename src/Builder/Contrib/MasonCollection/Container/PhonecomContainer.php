@@ -36,51 +36,7 @@ class PhonecomContainer implements Container
 
     public function applyFilter(Filter $filter, $operator, array $params)
     {
-        $field = $filter->getField();
-
-        switch ($operator) {
-            // Zero-parameter operators
-
-            case 'empty':
-                $this->query->whereEmpty($field);
-                break;
-
-            case 'not-empty':
-                $this->query->whereNotEmpty($field);
-                break;
-
-            // Single-parameter operators
-
-            case 'eq':
-            case 'ne':
-            case 'lt':
-            case 'gt':
-            case 'lte':
-            case 'gte':
-            case 'starts-with':
-            case 'ends-with':
-            case 'contains':
-            case 'not-starts-with':
-            case 'not-ends-with':
-            case 'not-contains':
-                $this->query->where($field, $operator, $params[0]);
-                break;
-
-            // Dual-parameter operators
-
-            case 'between':
-            case 'not-between':
-                throw new \Exception('Not supported yet');
-                //$this->query->whereBetween($field, $params);
-                break;
-
-            // Unlimited-parameter operators
-
-            case 'in':
-            case 'not-in':
-                throw new \Exception('Not supported yet');
-                break;
-        }
+        $this->query->where($filter->getField(), $operator, $params);
 
         return $this;
     }
