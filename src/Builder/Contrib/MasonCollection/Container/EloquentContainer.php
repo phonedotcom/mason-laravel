@@ -2,7 +2,6 @@
 namespace PhoneCom\Mason\Builder\Contrib\MasonCollection\Container;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
 
 class EloquentContainer implements Container
@@ -152,26 +151,8 @@ class EloquentContainer implements Container
 
     public function getItems($limit, $offset)
     {
-        $query = $this->query;
-        $model = $query->getModel();
-
-        switch ($model->getConnection()->getConfig('driver')) {
-            /*
-            case 'mysql':
-
-                $modelClass = get_class($model);
-                $query->skip($offset)->take($limit);
-
-                $sql = preg_replace("/^SELECT /i", 'SELECT SQL_CALC_FOUND_ROWS ', $query->toSql());
-                $pageOfItems = $modelClass::hydrateRaw($sql, $query->getBindings(), $model->getConnectionName());
-                $total = DB::selectOne('SELECT FOUND_ROWS() AS rowCount')->rowCount;
-                break;
-            */
-
-            default:
-                $total = $query->getQuery()->getCountForPagination();
-                $pageOfItems = $query->skip($offset)->take($limit)->get();
-        }
+        $total = $this->query->getQuery()->getCountForPagination();
+        $pageOfItems = $this->query->skip($offset)->take($limit)->get();
 
         return [$pageOfItems, $total];
     }
