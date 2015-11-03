@@ -54,6 +54,8 @@ class MasonCollection extends Document
      */
     private $itemRenderer;
 
+    private $useFullMason = true;
+
     /**
      * @param Request $request HTTP request
      * @param Container $container Container for storing or querying the data set
@@ -88,6 +90,20 @@ class MasonCollection extends Document
 
             $this->allowedFilterTypes[$filter->getName()] = $filter;
         }
+
+        return $this;
+    }
+
+    public function useFullMason()
+    {
+        $this->useFullMason = true;
+
+        return $this;
+    }
+
+    public function useBriefMason()
+    {
+        $this->useFullMason = false;
 
         return $this;
     }
@@ -190,8 +206,11 @@ class MasonCollection extends Document
                 $item = new Child();
                 call_user_func_array($this->itemRenderer, [$item, $rawItem]);
 
-            } elseif (is_object($rawItem) && method_exists($rawItem, 'toFullMason')) {
+            } elseif ($this->useFullMason && is_object($rawItem) && method_exists($rawItem, 'toFullMason')) {
                 $item = $rawItem->toFullMason();
+
+            } elseif (!$this->useFullMason && is_object($rawItem) && method_exists($rawItem, 'toBriefMason')) {
+                $item = $rawItem->toBriefMason();
 
             } else {
                 $item = $rawItem;
