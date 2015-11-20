@@ -54,8 +54,6 @@ class MasonCollection extends Document
      */
     private $itemRenderer;
 
-    private $useFullMason = true;
-
     /**
      * @param Request $request HTTP request
      * @param Container $container Container for storing or querying the data set
@@ -70,7 +68,7 @@ class MasonCollection extends Document
 
     public static function getSupportedQueryParamNames()
     {
-        return ['limit', 'offset', 'sort', 'filters'];
+        return ['limit', 'offset', 'sort', 'filters', 'fields'];
     }
 
     public function setFilterTypes(array $allowedTypes)
@@ -90,20 +88,6 @@ class MasonCollection extends Document
 
             $this->allowedFilterTypes[$filter->getName()] = $filter;
         }
-
-        return $this;
-    }
-
-    public function useFullMason()
-    {
-        $this->useFullMason = true;
-
-        return $this;
-    }
-
-    public function useBriefMason()
-    {
-        $this->useFullMason = false;
 
         return $this;
     }
@@ -200,24 +184,31 @@ class MasonCollection extends Document
 
     private function getRenderedItemList($rawItems)
     {
+        // TODO: Naming this property "fields" gives us an easy way to support arbitrary lists of field names later.
+        $renderFull = (in_array($this->request->input('fields'), ['all', 'full']));
+
         $items = [];
         foreach ($rawItems as $index => $rawItem) {
             if ($this->itemRenderer) {
                 $item = new Child();
-                call_user_func_array($this->itemRenderer, [$item, $rawItem]);
+                call_user_func_array($this->itemRenderer, [$item, $rawItem, $renderFull]);
 
-            } elseif ($this->useFullMason && is_object($rawItem) && method_exists($rawItem, 'toFullMason')) {
-                $item = $rawItem->toFullMason();
+            } elseif (is_object($rawItem)) {
+                if ($renderFull && method_exists($rawItem, 'toFullMason')) {
+                    $item = $rawItem->toFullMason();
 
-            } elseif (!$this->useFullMason && is_object($rawItem) && method_exists($rawItem, 'toBriefMason')) {
-                $item = $rawItem->toBriefMason();
+                } elseif (!$renderFull && method_exists($rawItem, 'toBriefMason')) {
+                    $item = $rawItem->toBriefMason();
+
+                } else {
+                    $item = get_object_vars($rawItem);
+                }
 
             } else {
                 $item = $rawItem;
             }
 
             $items[] = $item;
-
         }
 
         return $items;
@@ -267,7 +258,8 @@ class MasonCollection extends Document
             'limit' => 'sometimes|integer|min:1|max:' . self::MAX_PER_PAGE,
             'offset' => 'sometimes|integer|min:0',
             'sort' => 'sometimes|array|sorting:' . join(',', $this->getValidSortTypes()),
-            'filters' => 'sometimes|array'
+            'filters' => 'sometimes|array',
+            'fields' => 'sometimes|in:all,full,brief'
         ];
 
         $filters = $this->request->get('filters');
@@ -368,8 +360,6 @@ class MasonCollection extends Document
 
     private function applySorting()
     {
-        // TODO: Add a Sort class like we did for Filters
-
         $sort = $this->request->input('sort', $this->defaultSorting);
         foreach ($sort as $type => $direction) {
             if (isset($this->allowedSortTypes[$type])) {
