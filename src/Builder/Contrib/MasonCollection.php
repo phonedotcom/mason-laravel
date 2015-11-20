@@ -185,7 +185,8 @@ class MasonCollection extends Document
     private function getRenderedItemList($rawItems)
     {
         // TODO: Naming this property "fields" gives us an easy way to support arbitrary lists of field names later.
-        $renderFull = (in_array($this->request->input('fields'), ['all', 'full']));
+        $fields = $this->request->input('fields');
+        $renderFull = ($fields === null || in_array($this->request->input('fields'), ['all', 'full']));
 
         $items = [];
         foreach ($rawItems as $index => $rawItem) {
