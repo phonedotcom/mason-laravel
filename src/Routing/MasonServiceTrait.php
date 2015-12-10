@@ -87,8 +87,8 @@ trait MasonServiceTrait
             'title', 'description', 'isHrefTemplate', 'schemaUrl', 'schema', 'template', 'accept',
             'output', 'encoding', 'jsonFile', 'files', 'alt'
         ] as $property) {
-            if (!empty(static::$property)) {
-                $properties[$property] = static::$property;
+            if (!empty(static::$$property)) {
+                $properties[$property] = static::$$property;
             }
         }
 
@@ -107,7 +107,21 @@ trait MasonServiceTrait
             }
         }
 
-        return new Control(static::getUrl($params), $properties);
+        if (!empty(static::$isHrefTemplate) && !empty(static::$routePathTemplateParams)) {
+            $patterns = [];
+            foreach (static::$routePathTemplateParams as $templateName => $templateValue) {
+                $key = '___' . strtoupper($templateName) . '___';
+                $patterns[$key] = $templateValue;
+                $params[$templateName] = $key;
+            }
+
+            $url = strtr(static::getUrl($params), $patterns);
+
+        } else {
+            $url = static::getUrl($params);
+        }
+
+        return new Control($url, $properties);
     }
 
     private static function getOutputSchemaRouteName()
