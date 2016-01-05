@@ -14,7 +14,7 @@ use PhoneCom\Mason\Builder\Document;
 class MasonCollection extends Document
 {
     const DEFAULT_PER_PAGE = 10;
-    const MAX_PER_PAGE = 300;
+    const MAX_PER_PAGE = 500;
 
     private $assembled = false;
 
