@@ -116,6 +116,8 @@ class CollectionContainer implements Container
 
     public function getItems($requestedLimit, $requestedOffset)
     {
-        return [$this->collection, count($this->collection)];
+        $items = $this->collection->slice($requestedOffset, $requestedLimit);
+
+        return [$items, $this->collection->count()];
     }
 }
