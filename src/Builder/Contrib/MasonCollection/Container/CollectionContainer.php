@@ -8,7 +8,7 @@ use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
 class CollectionContainer implements Container
 {
     /**
-     * @var Builder
+     * @var Collection
      */
     protected $collection;
 
@@ -25,14 +25,14 @@ class CollectionContainer implements Container
 
     public function setSorting($field, $direction)
     {
-        $this->collection->sortBy($field, SORT_NATURAL, (strtolower($direction) == 'desc'));
+        $this->collection = $this->collection->sortBy($field, SORT_NATURAL, (strtolower($direction) == 'desc'));
 
         return $this;
     }
 
     public function applyFilter(Filter $filter, $operator, array $params)
     {
-        $this->collection->filter(function($item) use ($filter, $operator, $params) {
+        $this->collection = $this->collection->filter(function($item) use ($filter, $operator, $params) {
 
             $field = $filter->getField();
 
