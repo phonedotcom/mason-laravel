@@ -51,11 +51,10 @@ class MasonResponse extends JsonResponse
             $document->assemble();
         }
 
-        $headers = array_merge($headers, self::$defaultHeaders);
+        $headers = array_merge(['Content-Type' => self::MIME_TYPE], self::$defaultHeaders, $headers);
 
         $this->applyPreferHeader($document, $request, $headers, $options);
         $document->sort(self::$defaultSorting, self::$controlsSorting, self::$metaSorting);
-        $headers['Content-Type'] = self::MIME_TYPE;
 
         parent::__construct($document, $status, $headers, $options);
 
