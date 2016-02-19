@@ -32,18 +32,18 @@ trait MasonServiceTrait
         $methods = get_class_methods(static::class);
 
         if (in_array('schema', $methods)) {
-            $router->get("/schemas/" . self::getSchemaSlug(), [
+            $router->get(self::getBaseSchemaPath(), [
                 'as' => self::getSchemaRouteName(), 'uses' => "$class@schema"
             ]);
 
         } else {
             if (in_array('inputSchema', $methods)) {
-                $router->get("/schemas/" . self::getSchemaSlug() . '-input', [
+                $router->get(self::getInputSchemaPath(), [
                     'as' => self::getInputSchemaRouteName(), 'uses' => "$class@inputSchema"
                 ]);
             }
             if (in_array('outputSchema', $methods)) {
-                $router->get("/schemas/" . self::getSchemaSlug(), [
+                $router->get(self::getOutputSchemaPath(), [
                     'as' => self::getOutputSchemaRouteName(), 'uses' => "$class@outputSchema"
                 ]);
             }
@@ -68,25 +68,29 @@ trait MasonServiceTrait
         return isset($router->getRoutes()['OPTIONS'.$path]);
     }
 
-    private static function getSchemaSlug()
+    private static function getInputSchemaPath()
     {
-        $slug = '';
-        if (strtoupper(static::$verb) != 'GET') {
-            $slug .= strtolower(static::$verb) . '-';
-        }
-        $slug .= str_replace('.', '-', static::$routeName);
+        return self::getBaseSchemaPath() . '/input';
+    }
 
-        return $slug;
+    private static function getOutputSchemaPath()
+    {
+        return self::getBaseSchemaPath() . '/output';
+    }
+
+    private static function getBaseSchemaPath()
+    {
+        return '/schemas/' . str_replace('.', '/', static::$routeName) . '/' . strtolower(static::$verb);
     }
 
     public static function getMasonControl(array $params = [])
     {
-        $properties = [];
-
-        foreach ([
+        $fieldNames = [
             'title', 'description', 'isHrefTemplate', 'schemaUrl', 'schema', 'template', 'accept',
             'output', 'encoding', 'jsonFile', 'files', 'alt'
-        ] as $property) {
+        ];
+
+        foreach ($fieldNames as $property) {
             if (!empty(static::$$property)) {
                 $properties[$property] = static::$$property;
             }
@@ -191,7 +195,7 @@ trait MasonServiceTrait
 
     public static function getRelation()
     {
-        return static::$curieNamespace . ':' . static::getSchemaSlug();
+        return static::$curieNamespace . ':' . static::getOutputSchemaPath();
     }
 
     protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [])
