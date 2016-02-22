@@ -201,6 +201,9 @@ trait MasonPathServiceTrait
     ) {
 
         $verb = strtolower($request->method());
+        if ($verb == 'head') {
+            $verb = 'get';
+        }
 
         if (method_exists($this, $verb . 'OutputSchema')) {
             $url = static::getOutputSchemaUrl($verb);
