@@ -2,91 +2,68 @@
 
 use Route as LaravelRoute;
 use Illuminate\Foundation\Application;
-use Illuminate\Routing\Route;
-use Illuminate\Routing\Router;
 use PhoneCom\Mason\Schema\JsonSchema;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use PhoneCom\Mason\Builder\Components\Control;
 use PhoneCom\Mason\Builder\Document;
 use PhoneCom\Mason\Http\MasonResponse;
 use PhoneCom\Mason\Http\SchemaResponse;
 
 /**
- * Sets up routes for a Mason service endpoint.  Assumes you will have one controller per URI per Verb.
+ * Sets up routes for a Mason service endpoint.  Assumes you will have one controller per URI.
  */
-trait MasonServiceTrait
+trait MasonPathServiceTrait
 {
-    public static function registerRoute($router)
+    public static function registerRoutes($router)
     {
-        if (empty(static::$routeName) || empty(static::$routePath) || empty(static::$verb)) {
-            throw new \Exception(sprintf(
-                'Service has no routeName, routePath, and/or verb defined: %s',
-                get_called_class()
-            ));
+        if (empty(static::$routeName) || empty(static::$routePath)) {
+            throw new \Exception(sprintf('%s has no routeName and/or routePath', get_called_class()));
         }
 
         $path = static::$routePath;
         $class = get_called_class();
 
-        $method = strtolower(static::$verb);
-        $router->$method($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
-
+        $verbs = ['get', 'post', 'put', 'patch', 'delete'];
         $methods = get_class_methods(static::class);
+        $implementedVerbs = array_intersect($verbs, $methods);
 
-        if (in_array('schema', $methods)) {
-            $router->get(self::getBaseSchemaPath(), [
-                'as' => self::getSchemaRouteName(), 'uses' => "$class@schema"
-            ]);
+        foreach ($implementedVerbs as $verb) {
 
-        } else {
-            if (in_array('inputSchema', $methods)) {
-                $router->get(self::getInputSchemaPath(), [
-                    'as' => self::getInputSchemaRouteName(), 'uses' => "$class@inputSchema"
+            $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@$verb"]);
+
+            if (in_array($verb . 'InputSchema', $methods)) {
+                $router->get(static::getInputSchemaPath($verb), [
+                    'as' => static::getInputSchemaRouteName($verb), 'uses' => "$class@{$verb}InputSchema"
                 ]);
             }
-            if (in_array('outputSchema', $methods)) {
-                $router->get(self::getOutputSchemaPath(), [
-                    'as' => self::getOutputSchemaRouteName(), 'uses' => "$class@outputSchema"
+
+            if (in_array($verb . 'OutputSchema', $methods)) {
+                $router->get(static::getOutputSchemaPath($verb), [
+                    'as' => static::getOutputSchemaRouteName($verb), 'uses' => "$class@{$verb}OutputSchema"
                 ]);
             }
+
         }
 
-        if (!self::pathIsRegistered($router, $path)) {
-            $router->options($path, ['uses' => "$class@options"]);
-        }
+        $router->options($path, ['uses' => "$class@options"]);
     }
 
-    private static function pathIsRegistered($router, $path)
+    private static function getInputSchemaPath($verb)
     {
-        if ($router instanceof Router) {
-            foreach ($router->getRoutes() as $route) {
-                if (in_array('OPTIONS', $route->getMethods()) && $route->getPath() == $path) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        return isset($router->getRoutes()['OPTIONS'.$path]);
+        return self::getBaseSchemaPath($verb) . '/input';
     }
 
-    private static function getInputSchemaPath()
+    private static function getOutputSchemaPath($verb)
     {
-        return self::getBaseSchemaPath() . '/input';
+        return self::getBaseSchemaPath($verb) . '/output';
     }
 
-    private static function getOutputSchemaPath()
+    private static function getBaseSchemaPath($verb)
     {
-        return self::getBaseSchemaPath() . '/output';
+        return '/schemas/' . str_replace('.', '/', static::$routeName) . '/' . $verb;
     }
 
-    private static function getBaseSchemaPath()
-    {
-        return '/schemas/' . str_replace('.', '/', static::$routeName) . '/' . strtolower(static::$verb);
-    }
-
-    public static function getMasonControl(array $params = [])
+    public static function getMasonControl($verb, array $params = [])
     {
         $fieldNames = [
             'title', 'description', 'isHrefTemplate', 'schemaUrl', 'schema', 'template', 'accept',
@@ -101,14 +78,14 @@ trait MasonServiceTrait
             }
         }
 
-        $isGet = (strtoupper(static::$verb) == 'GET');
+        $isGet = ($verb == 'get');
         if (!$isGet) {
-            $properties['method'] = strtoupper(static::$verb);
+            $properties['method'] = strtoupper($verb);
         }
 
-        if (in_array('inputSchema', get_class_methods(static::class))) {
+        if (in_array($verb . 'InputSchema', get_class_methods(static::class))) {
             if (!isset($properties['schemaUrl'])) {
-                $properties['schemaUrl'] = route(static::getInputSchemaRouteName());
+                $properties['schemaUrl'] = route(static::getInputSchemaRouteName($verb));
             }
 
             if (!$isGet && !isset($properties['encoding'])) {
@@ -133,19 +110,14 @@ trait MasonServiceTrait
         return new Control($url, $properties);
     }
 
-    private static function getOutputSchemaRouteName()
+    private static function getOutputSchemaRouteName($verb)
     {
-        return 'schemas.' . strtolower(static::$verb) . '.' . static::$routeName . '.output';
+        return 'schemas.' . static::$routeName . ".$verb.output";
     }
 
-    private static function getInputSchemaRouteName()
+    private static function getInputSchemaRouteName($verb)
     {
-        return 'schemas.' . strtolower(static::$verb) . '.' . static::$routeName . '.input';
-    }
-
-    private static function getSchemaRouteName()
-    {
-        return 'schemas.' . strtolower(static::$verb) . '.' . static::$routeName;
+        return 'schemas.' . static::$routeName . ".$verb.input";
     }
 
     public static function getUrl(array $params = [])
@@ -198,9 +170,9 @@ trait MasonServiceTrait
         return MasonResponse::create($doc, $request, 200, ['Allow' => join(',', $supportedVerbs)]);
     }
 
-    public static function getRelation()
+    public static function getRelation($verb)
     {
-        return static::$curieNamespace . ':' . static::$routeName . '-' . strtolower(static::$verb);
+        return static::$curieNamespace . ':' . static::$routeName . '-' . $verb;
     }
 
     protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [])
@@ -210,19 +182,14 @@ trait MasonServiceTrait
         return $this->makeMasonResponse($document, $request, [], 201, $headers);
     }
 
-    public static function getOutputSchemaUrl()
+    public static function getOutputSchemaUrl($verb)
     {
-        return route(static::getOutputSchemaRouteName());
+        return route(static::getOutputSchemaRouteName($verb));
     }
 
-    public static function getSchemaUrl()
+    public static function getInputSchemaUrl($verb)
     {
-        return route(static::getSchemaRouteName());
-    }
-
-    public static function getInputSchemaUrl()
-    {
-        return route(static::getInputSchemaRouteName());
+        return route(static::getInputSchemaRouteName($verb));
     }
 
     protected function makeMasonResponse(
@@ -233,9 +200,11 @@ trait MasonServiceTrait
         array $headers = []
     ) {
 
-        if (method_exists($this, 'outputSchema') || method_exists($this, 'schema')) {
-            $url = (method_exists($this, 'schema') ? static::getSchemaUrl() : static::getOutputSchemaUrl());
-            $document->setMetaProperty('relation', static::getRelation())
+        $verb = strtolower($request->method());
+
+        if (method_exists($this, $verb . 'OutputSchema')) {
+            $url = static::getOutputSchemaUrl($verb);
+            $document->setMetaProperty('relation', static::getRelation($verb))
                 ->setControl('profile', new Control($url, ['output' => [SchemaResponse::MIME_TYPE]]));
 
             if (isset($headers['Link']) && !is_array($headers['Link'])) {
@@ -245,7 +214,7 @@ trait MasonServiceTrait
         }
 
         if (!isset($document->{'@controls'}->self)) {
-            $document->setControl('self', static::getMasonControl($routeParams));
+            $document->setControl('self', static::getMasonControl($verb, $routeParams));
         }
 
         if (method_exists($this, 'addDefaultMasonNamespace')) {
