@@ -14,10 +14,10 @@ use PhoneCom\Mason\Http\SchemaResponse;
  */
 trait MasonPathServiceTrait
 {
-    public static function registerRoutes($router)
+    public static function registerRoutes($router, $middleware = null)
     {
         if (empty(static::$routeName) || empty(static::$routePath)) {
-            throw new \Exception(sprintf('%s has no routeName and/or routePath', get_called_class()));
+            throw new \Exception(sprintf('%s has no static property $routeName and/or $routePath', get_called_class()));
         }
 
         $path = static::$routePath;
@@ -27,9 +27,20 @@ trait MasonPathServiceTrait
         $methods = get_class_methods(static::class);
         $implementedVerbs = array_intersect($verbs, $methods);
 
+        $middlewareIsGlobal = ($middleware && is_array($middleware) && array_values($middleware) != $middleware);
+
         foreach ($implementedVerbs as $verb) {
 
-            $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@$verb"]);
+            $route = $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@$verb"]);
+
+            if ($middleware) {
+                if ($middlewareIsGlobal) {
+                    $route->middleware($middleware);
+
+                } elseif (!empty($middleware[$verb])) {
+                    $route->middleware($middleware[$verb]);
+                }
+            }
 
             if (in_array($verb . 'InputSchema', $methods)) {
                 $router->get(static::getInputSchemaPath($verb), [
