@@ -47,13 +47,6 @@ trait MasonPathServiceTrait
                     'as' => static::getInputSchemaRouteName($verb), 'uses' => "$class@{$verb}InputSchema"
                 ]);
             }
-
-            if (in_array($verb . 'OutputSchema', $methods)) {
-                $router->get(static::getOutputSchemaPath($verb), [
-                    'as' => static::getOutputSchemaRouteName($verb), 'uses' => "$class@{$verb}OutputSchema"
-                ]);
-            }
-
         }
 
         $router->options($path, ['uses' => "$class@options"]);
@@ -61,17 +54,7 @@ trait MasonPathServiceTrait
 
     private static function getInputSchemaPath($verb)
     {
-        return self::getBaseSchemaPath($verb) . '/input';
-    }
-
-    private static function getOutputSchemaPath($verb)
-    {
-        return self::getBaseSchemaPath($verb) . '/output';
-    }
-
-    private static function getBaseSchemaPath($verb)
-    {
-        return '/schemas/' . str_replace('.', '/', static::$routeName) . '/' . $verb;
+        return '/schemas/' . str_replace('.', '/', static::$routeName) . '/' . $verb . '/input';
     }
 
     public static function getMasonControl($verb, array $params = [])
@@ -119,11 +102,6 @@ trait MasonPathServiceTrait
         }
 
         return new Control($url, $properties);
-    }
-
-    private static function getOutputSchemaRouteName($verb)
-    {
-        return 'schemas.' . static::$routeName . ".$verb.output";
     }
 
     private static function getInputSchemaRouteName($verb)
@@ -183,7 +161,13 @@ trait MasonPathServiceTrait
 
     public static function getRelation($verb)
     {
-        return static::$curieNamespace . ':' . static::$routeName . '-' . $verb;
+        if (empty(static::$relations[$verb])) {
+            $message = sprintf('You are missing a static property: %s::$relations[\'%s\']', static::class, $verb);
+
+            throw new \Exception($message);
+        }
+
+        return static::$relations[$verb];
     }
 
     protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [])
@@ -193,9 +177,13 @@ trait MasonPathServiceTrait
         return $this->makeMasonResponse($document, $request, [], 201, $headers);
     }
 
-    public static function getOutputSchemaUrl($verb)
+    public static function getProfileUrl($verb)
     {
-        return route(static::getOutputSchemaRouteName($verb));
+        $relation = static::$relations[$verb];
+        list($namespace, $suffix) = explode(':', $relation);
+        $baseUrl = config('app.mason-namespaces.' . $namespace);
+
+        return $baseUrl . $suffix;
     }
 
     public static function getInputSchemaUrl($verb)
@@ -216,10 +204,9 @@ trait MasonPathServiceTrait
             $verb = 'get';
         }
 
-        if (method_exists($this, $verb . 'OutputSchema')) {
-            $url = static::getOutputSchemaUrl($verb);
-            $document->setMetaProperty('relation', static::getRelation($verb))
-                ->setControl('profile', new Control($url, ['output' => [SchemaResponse::MIME_TYPE]]));
+        if (!empty(static::$relations[$verb])) {
+            $url = static::getProfileUrl($verb);
+            $document->setMetaControl('profile', new Control($url));
 
             if (isset($headers['Link']) && !is_array($headers['Link'])) {
                 $headers['Link'] = [$headers['Link']];
@@ -231,8 +218,8 @@ trait MasonPathServiceTrait
             $document->setControl('self', static::getMasonControl($verb, $routeParams));
         }
 
-        if (method_exists($this, 'addDefaultMasonNamespace')) {
-            $this->addDefaultMasonNamespace($document);
+        if (method_exists($this, 'addMasonNamespaces')) {
+            $this->addMasonNamespaces($document);
         }
 
         return MasonResponse::create($document, $request, $status, $headers, JSON_UNESCAPED_SLASHES);

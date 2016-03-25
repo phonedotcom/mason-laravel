@@ -45,11 +45,6 @@ trait MasonServiceTrait
                     'as' => self::getInputSchemaRouteName(), 'uses' => "$class@inputSchema"
                 ]);
             }
-            if (in_array('outputSchema', $methods)) {
-                $router->get(self::getOutputSchemaPath(), [
-                    'as' => self::getOutputSchemaRouteName(), 'uses' => "$class@outputSchema"
-                ]);
-            }
         }
 
         if (!self::pathIsRegistered($router, $path)) {
@@ -74,11 +69,6 @@ trait MasonServiceTrait
     private static function getInputSchemaPath()
     {
         return self::getBaseSchemaPath() . '/input';
-    }
-
-    private static function getOutputSchemaPath()
-    {
-        return self::getBaseSchemaPath() . '/output';
     }
 
     private static function getBaseSchemaPath()
@@ -131,11 +121,6 @@ trait MasonServiceTrait
         }
 
         return new Control($url, $properties);
-    }
-
-    private static function getOutputSchemaRouteName()
-    {
-        return 'schemas.' . strtolower(static::$verb) . '.' . static::$routeName . '.output';
     }
 
     private static function getInputSchemaRouteName()
@@ -210,11 +195,6 @@ trait MasonServiceTrait
         return $this->makeMasonResponse($document, $request, [], 201, $headers);
     }
 
-    public static function getOutputSchemaUrl()
-    {
-        return route(static::getOutputSchemaRouteName());
-    }
-
     public static function getSchemaUrl()
     {
         return route(static::getSchemaRouteName());
@@ -232,17 +212,6 @@ trait MasonServiceTrait
         $status = 200,
         array $headers = []
     ) {
-
-        if (method_exists($this, 'outputSchema') || method_exists($this, 'schema')) {
-            $url = (method_exists($this, 'schema') ? static::getSchemaUrl() : static::getOutputSchemaUrl());
-            $document->setMetaProperty('relation', static::getRelation())
-                ->setControl('profile', new Control($url, ['output' => [SchemaResponse::MIME_TYPE]]));
-
-            if (isset($headers['Link']) && !is_array($headers['Link'])) {
-                $headers['Link'] = [$headers['Link']];
-            }
-            $headers['Link'][] = sprintf('<%s>; rel="profile"', $url);
-        }
 
         if (!isset($document->{'@controls'}->self)) {
             $document->setControl('self', static::getMasonControl($routeParams));
