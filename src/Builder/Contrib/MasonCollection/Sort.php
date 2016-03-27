@@ -3,7 +3,7 @@ namespace PhoneCom\Mason\Builder\Contrib\MasonCollection;
 
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\Container;
 
-class Filter
+class Sort
 {
     /**
      * Name of the filter
@@ -13,14 +13,6 @@ class Filter
 
     protected $title;
 
-    protected $schemaProperties = [];
-
-    /**
-     * Supported operators. If unspecified, all known operators will be accepted.
-     * @var array
-     */
-    protected $operators;
-
     /**
      * Callback function for applying filters
      * @var callable
@@ -28,23 +20,11 @@ class Filter
     protected $function;
 
     /**
-     * Extra validation rules
-     * @var string|array
-     */
-    protected $rules;
-
-    /**
      * Name of the field to filter on, if different from the filter's name. This is useful for example if the
      * primary key of the database table is different from how you wish it to be represented in the query arguments.
      * @var string
      */
     protected $field;
-
-    /**
-     * Class which contains the grammar for assembling the filters. Defaults to EloquentGrammar.
-     * @var Grammar
-     */
-    protected $grammar;
 
     public static function make($name, $title = null)
     {
@@ -57,23 +37,6 @@ class Filter
         if ($title) {
             $this->setTitle($title);
         }
-    }
-
-    public function setSchemaProperties(array $properties)
-    {
-        $this->schemaProperties = $properties;
-
-        return $this;
-    }
-
-    public function getSchemaProperties()
-    {
-        $properties = $this->schemaProperties;
-        if (!isset($properties['title']) && $this->title) {
-            $properties['title'] = $this->title;
-        }
-
-        return $properties;
     }
 
     public function setTitle($title)
@@ -112,22 +75,6 @@ class Filter
         return ($this->field ?: $this->getName());
     }
 
-    public function setSupportedOperators($operators)
-    {
-        if (is_string($operators)) {
-            $operators = func_get_args();
-        }
-
-        $this->operators = $operators;
-
-        return $this;
-    }
-
-    public function getSupportedOperators()
-    {
-        return $this->operators;
-    }
-
     public function setFunction($callable)
     {
         $this->function = $callable;
@@ -135,26 +82,14 @@ class Filter
         return $this;
     }
 
-    public function setValidationRules($rules)
-    {
-        $this->rules = $rules;
-
-        return $this;
-    }
-
-    public function getValidationRules()
-    {
-        return $this->rules;
-    }
-
-    public function apply(Container $container, $operator, $params)
+    public function apply(Container $container, $direction)
     {
         $callable = $this->function;
         if ($callable) {
-            $callable($container, $operator, $params, $this);
+            $callable($container, $direction, $this);
 
         } else {
-            $container->applyFilter($this, $operator, $params);
+            $container->setSorting($this->getField(), $direction);
         }
     }
 

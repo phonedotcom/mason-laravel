@@ -11,14 +11,8 @@ class EloquentContainer implements Container
      */
     protected $query;
 
-    public function __construct($query)
+    public function __construct(Builder $query)
     {
-        if (!$query instanceof Builder) {
-            throw new \InvalidArgumentException(
-                sprintf('Unsupported input, expected an instance of ' . Builder::class)
-            );
-        }
-
         $this->query = $query;
     }
 

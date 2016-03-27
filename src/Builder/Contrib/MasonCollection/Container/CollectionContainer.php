@@ -12,14 +12,8 @@ class CollectionContainer implements Container
      */
     protected $collection;
 
-    public function __construct($collection)
+    public function __construct(Collection $collection)
     {
-        if (!$collection instanceof Collection) {
-            throw new \InvalidArgumentException(
-                sprintf('Unsupported input, expected an instance of ' . Collection::class)
-            );
-        }
-
         $this->collection = $collection;
     }
 

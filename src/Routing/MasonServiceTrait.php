@@ -19,9 +19,10 @@ trait MasonServiceTrait
 {
     public static function registerRoute($router)
     {
-        if (empty(static::$routeName) || empty(static::$routePath) || empty(static::$verb)) {
+        if (empty(static::$routeName) || empty(static::$routePath)
+            || empty(static::$verb) || empty(static::$relation)) {
             throw new \Exception(sprintf(
-                'Service has no routeName, routePath, and/or verb defined: %s',
+                'Service has no routeName, routePath, verb, and/or relation defined: %s',
                 get_called_class()
             ));
         }
@@ -34,17 +35,10 @@ trait MasonServiceTrait
 
         $methods = get_class_methods(static::class);
 
-        if (in_array('schema', $methods)) {
-            $router->get(self::getBaseSchemaPath(), [
-                'as' => self::getSchemaRouteName(), 'uses' => "$class@schema"
+        if (in_array('inputSchema', $methods)) {
+            $router->get(self::getInputSchemaPath(), [
+                'as' => self::getInputSchemaRouteName(), 'uses' => "$class@inputSchema"
             ]);
-
-        } else {
-            if (in_array('inputSchema', $methods)) {
-                $router->get(self::getInputSchemaPath(), [
-                    'as' => self::getInputSchemaRouteName(), 'uses' => "$class@inputSchema"
-                ]);
-            }
         }
 
         if (!self::pathIsRegistered($router, $path)) {
@@ -68,15 +62,10 @@ trait MasonServiceTrait
 
     private static function getInputSchemaPath()
     {
-        return self::getBaseSchemaPath() . '/input';
+        return '/inputs/' . preg_replace("/[^\w-]/", '/', static::$relation);
     }
 
-    private static function getBaseSchemaPath()
-    {
-        return '/schemas/' . str_replace('.', '/', static::$routeName) . '/' . strtolower(static::$verb);
-    }
-
-    public static function getMasonControl(array $params = [])
+    public static function getMasonControl($params = [])
     {
         $fieldNames = [
             'title', 'description', 'isHrefTemplate', 'schemaUrl', 'schema', 'template', 'accept',
@@ -185,7 +174,7 @@ trait MasonServiceTrait
 
     public static function getRelation()
     {
-        return static::$curieNamespace . ':' . static::$routeName . '-' . strtolower(static::$verb);
+        return static::$relation;
     }
 
     protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [])

@@ -1,22 +1,26 @@
 <?php
 namespace PhoneCom\Mason\Builder\Contrib;
 
+use App\Http\Controllers\SharedSchemaController;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection as BaseCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\MessageBag;
 use PhoneCom\Mason\Builder\Child;
+use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\CollectionContainer;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\Container;
+use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\EloquentContainer;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
+use PhoneCom\Mason\Builder\Contrib\MasonCollection\Sort;
 use PhoneCom\Mason\Builder\Document;
+use Illuminate\Database\Eloquent\Builder;
+use PhoneCom\Mason\Schema\Contrib\CollectionInputSchema;
+use PhoneCom\Mason\Schema\JsonSchema;
 
 class MasonCollection extends Document
 {
     const DEFAULT_PER_PAGE = 10;
     const MAX_PER_PAGE = 500;
-
-    private $assembled = false;
 
     private static $filterOperators = [
         // zero-argument operators
@@ -35,40 +39,64 @@ class MasonCollection extends Document
         'unlimited' => ['in', 'not-in']
     ];
 
-    /**
-     * @var Container
-     */
-    private $container;
-
     private $defaultSorting = [];
     private $allowedFilterTypes = [];
     private $allowedSortTypes = [];
-
-    /**
-     * @var Request
-     */
-    private $request;
 
     /**
      * @var \Closure
      */
     private $itemRenderer;
 
-    /**
-     * @param Request $request HTTP request
-     * @param Container $container Container for storing or querying the data set
-     */
-    public function __construct(Request $request, Container $container)
+    public function __construct()
     {
-        parent::__construct();
+        $args = func_get_args();
+        if (!empty($args[0])) {
+            $this->request = $args[0];
+            if (!empty($args[1])) {
+                $this->container = $args[1];
+            }
+        }
 
-        $this->request = $request;
-        $this->container = $container;
+        parent::__construct();
     }
 
     public static function getSupportedQueryParamNames()
     {
         return ['limit', 'offset', 'sort', 'filters', 'fields'];
+    }
+
+    public function getInputSchema()
+    {
+        $schema = CollectionInputSchema::make();
+
+        if ($this->allowedFilterTypes) {
+            $filterDefinition = SharedSchemaController::getUrl('filtering');
+            $filterOptions = JsonSchema::make();
+            foreach ($this->allowedFilterTypes as $name => $filter) {
+                $params = $filter->getSchemaProperties();
+                if ($filter->getTitle()) {
+                    $params['title'] = 'Filter by ' . $filter->getTitle();
+                }
+                $filterOptions->setPropertyRef($name, $filterDefinition, $params);
+            }
+            $schema->setProperty('filters', $filterOptions);
+        }
+
+        if ($this->allowedSortTypes) {
+            $sortDefinition = SharedSchemaController::getUrl('sorting');
+            $sortOptions = JsonSchema::make();
+            foreach ($this->allowedSortTypes as $name => $sort) {
+                $params = [];
+                if ($sort->getTitle()) {
+                    $params['title'] = 'Sort by ' . $sort->getTitle();
+                }
+                $sortOptions->setPropertyRef($name, $sortDefinition, $params);
+            }
+            $schema->setProperty('sort', $sortOptions);
+        }
+
+        return $schema;
     }
 
     public function setFilterTypes(array $allowedTypes)
@@ -116,8 +144,30 @@ class MasonCollection extends Document
      */
     public function setSortTypes(array $allowedTypes, $defaultSorting = [])
     {
-        $this->allowedSortTypes = $allowedTypes;
+        $this->allowedSortTypes = [];
+        foreach ($allowedTypes as $index => $type) {
+            if ($type instanceof Sort) {
+                $sort = $type;
+
+            } else {
+                $sort = new Sort($type);
+
+                if (!is_numeric($index)) {
+                    $sort->setField($index);
+                }
+            }
+
+            $this->allowedSortTypes[$sort->getName()] = $sort;
+        }
+
         $this->defaultSorting = $defaultSorting;
+
+        return $this;
+    }
+
+    public function setDefaultSorting($name, $direction = 'asc')
+    {
+        $this->defaultSorting = [$name => $direction];
 
         return $this;
     }
@@ -154,39 +204,44 @@ class MasonCollection extends Document
      * Assemble the Mason document based on the inputs
      * @return $this
      */
-    public function assemble()
+    public function assemble(Request $request = null, $container = null)
     {
-        if (!$this->assembled) {
-            $this->assertValidInputs();
-            $this->applyFiltering();
-            $this->applySorting();
+        if ($container instanceof Builder) {
+            $container = new EloquentContainer($container);
 
-            $limit = (int)$this->request->input('limit', self::DEFAULT_PER_PAGE);
-            if ($limit < 1) {
-                $limit = 1;
-            }
+        } elseif ($container instanceof Collection) {
+            $container = new CollectionContainer($container);
 
-            $offset = (int)$this->request->input('offset', 0);
-            if ($offset < 0) {
-                $offset = 0;
-            }
-
-            list($items, $totalItems) = $this->container->getItems($limit, $offset);
-
-            $this->addPaginationProperties($totalItems, $offset, $limit);
-            $this->setProperty('items', $this->getRenderedItemList($items));
-
-            $this->assembled = true;
+        } elseif (!$container instanceof Container) {
+            throw new \InvalidArgumentException('Unsupported container');
         }
+
+        $this->assertValidInputs($request);
+        $this->applyFiltering($request, $container);
+        $this->applySorting($request, $container);
+
+        $limit = (int)$request->input('limit', self::DEFAULT_PER_PAGE);
+        if ($limit < 1) {
+            $limit = 1;
+        }
+
+        $offset = (int)$request->input('offset', 0);
+        if ($offset < 0) {
+            $offset = 0;
+        }
+
+        list($items, $totalItems) = $container->getItems($limit, $offset);
+
+        $this->addPaginationProperties($request, $totalItems, $offset, $limit);
+        $this->setProperty('items', $this->getRenderedItemList($request, $items));
 
         return $this;
     }
 
-    private function getRenderedItemList($rawItems)
+    private function getRenderedItemList(Request $request, $rawItems)
     {
-        // TODO: Naming this property "fields" gives us an easy way to support arbitrary lists of field names later.
-        $fields = $this->request->input('fields');
-        $renderFull = ($fields === null || in_array($this->request->input('fields'), ['all', 'full']));
+        $fields = $request->input('fields');
+        $renderFull = ($fields === null || in_array($request->input('fields'), ['all', 'full']));
 
         $items = [];
         foreach ($rawItems as $index => $rawItem) {
@@ -215,7 +270,7 @@ class MasonCollection extends Document
         return $items;
     }
 
-    private function addPaginationProperties($totalItems, $offset, $limit)
+    private function addPaginationProperties(Request $request, $totalItems, $offset, $limit)
     {
         $this->setProperties([
             'total' => $totalItems,
@@ -227,25 +282,25 @@ class MasonCollection extends Document
         $currentPage = ceil(($offset + 1) / $limit);
 
         if ($totalPages > 1) {
-            $this->setControl('first', $this->url($this->pageNumToOffset(1, $limit)));
+            $this->setControl('first', $this->url($request, $this->pageNumToOffset(1, $limit)));
         }
         if ($currentPage > 1) {
-            $this->setControl('prev', $this->url($this->pageNumToOffset($currentPage - 1, $limit)));
+            $this->setControl('prev', $this->url($request, $this->pageNumToOffset($currentPage - 1, $limit)));
         }
         if ($currentPage < $totalPages) {
-            $this->setControl('next', $this->url($this->pageNumToOffset($currentPage + 1, $limit)));
+            $this->setControl('next', $this->url($request, $this->pageNumToOffset($currentPage + 1, $limit)));
         }
         if ($totalPages > 1) {
-            $this->setControl('last', $this->url($this->pageNumToOffset($totalPages, $limit)));
+            $this->setControl('last', $this->url($request, $this->pageNumToOffset($totalPages, $limit)));
         }
     }
 
-    private function url($offset)
+    private function url(Request $request, $offset)
     {
-        $parameters = $this->request->query->all();
+        $parameters = $request->query->all();
         $parameters['offset'] = $offset;
 
-        return $this->request->url() . '?' . http_build_query($parameters);
+        return $request->url() . '?' . http_build_query($parameters);
     }
 
     private function pageNumToOffset($page, $limit)
@@ -253,7 +308,7 @@ class MasonCollection extends Document
         return ($page - 1) * $limit;
     }
 
-    private function assertValidInputs()
+    private function assertValidInputs(Request $request)
     {
         $rules = [
             'limit' => 'sometimes|integer|min:1|max:' . self::MAX_PER_PAGE,
@@ -263,7 +318,7 @@ class MasonCollection extends Document
             'fields' => 'sometimes|in:all,full,brief'
         ];
 
-        $filters = $this->request->get('filters');
+        $filters = $request->get('filters');
         if ($filters && is_array($filters)) {
             $filterList = join(',', $this->getValidFilterTypes());
             foreach ($filters as $key => $value) {
@@ -292,7 +347,7 @@ class MasonCollection extends Document
 
         $this->extendValidator();
 
-        $validator = Validator::make($this->request->all(), $rules);
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             throw new ValidationException($validator);
@@ -347,42 +402,23 @@ class MasonCollection extends Document
 
     private function getValidSortTypes()
     {
-        $types = [];
-        foreach ($this->allowedSortTypes as $index => $value) {
-            if ($value instanceof \Closure) {
-                $types[] = $index;
-            } else {
-                $types[] = $value;
-            }
-        }
-
-        return $types;
+        return array_keys($this->allowedSortTypes);
     }
 
-    private function applySorting()
+    private function applySorting(Request $request, Container $container)
     {
-        $sort = $this->request->input('sort', $this->defaultSorting);
-        foreach ($sort as $type => $direction) {
-            if (isset($this->allowedSortTypes[$type])) {
-                $closure = $this->allowedSortTypes[$type];
-                $closure($this->container, $direction);
-
-            } elseif (($key = array_search($type, $this->allowedSortTypes)) !== false) {
-                $column = (is_numeric($key) ? $type : $key);
-                $this->container->setSorting($column, $direction);
-            }
+        $sort = $request->input('sort', $this->defaultSorting);
+        foreach ($sort as $name => $direction) {
+            $this->allowedSortTypes[$name]->apply($container, $direction);
         }
 
-        if ($sort) {
-            $this->setMetaProperty('sort', $sort);
-        }
+        $this->setProperty('sort', $sort);
     }
 
-    private function applyFiltering()
+    private function applyFiltering(Request $request, Container $container)
     {
-        $filters = $this->request->input('filters');
+        $filters = $request->input('filters', []);
         if ($filters) {
-            $this->setMetaProperty('filters', $filters);
 
             foreach ($filters as $name => $subfilters) {
 
@@ -392,10 +428,12 @@ class MasonCollection extends Document
 
                 foreach ($subfilters as $subfilter) {
                     list($operator, $params) = self::parseFilterItem($subfilter);
-                    $this->allowedFilterTypes[$name]->apply($this->container, $operator, $params);
+                    $this->allowedFilterTypes[$name]->apply($container, $operator, $params);
                 }
             }
         }
+
+        $this->setProperty('filters', (object)$filters);
     }
 
     public static function parseFilterItem($filter)

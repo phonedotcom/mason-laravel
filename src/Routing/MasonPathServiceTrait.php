@@ -54,11 +54,17 @@ trait MasonPathServiceTrait
 
     private static function getInputSchemaPath($verb)
     {
-        return '/schemas/' . str_replace('.', '/', static::$routeName) . '/' . $verb . '/input';
+        return '/inputs/' . preg_replace("/[^\w-]+/", '/', static::$relations[$verb]);
     }
 
-    public static function getMasonControl($verb, array $params = [])
+    public static function getMasonControl($params = [])
     {
+        if (is_string($params)) {
+            $verb = $params;
+            $args = func_get_args();
+            $params = (isset($args[1]) ? $args[1] : []);
+        }
+
         $fieldNames = [
             'title', 'description', 'isHrefTemplate', 'schemaUrl', 'schema', 'template', 'accept',
             'output', 'encoding', 'jsonFile', 'files', 'alt'
@@ -106,7 +112,7 @@ trait MasonPathServiceTrait
 
     private static function getInputSchemaRouteName($verb)
     {
-        return 'schemas.' . static::$routeName . ".$verb.input";
+        return 'inputs.' . static::$routeName . ".$verb";
     }
 
     public static function getUrl(array $params = [])
@@ -159,8 +165,12 @@ trait MasonPathServiceTrait
         return MasonResponse::create($doc, $request, 200, ['Allow' => join(',', $supportedVerbs)]);
     }
 
-    public static function getRelation($verb)
+    public static function getRelation()
     {
+        if (count(func_get_args()) > 1) {
+            $verb = func_get_args()[1];
+        }
+
         if (empty(static::$relations[$verb])) {
             $message = sprintf('You are missing a static property: %s::$relations[\'%s\']', static::class, $verb);
 

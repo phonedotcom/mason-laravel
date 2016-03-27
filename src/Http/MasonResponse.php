@@ -1,8 +1,8 @@
 <?php
 namespace PhoneCom\Mason\Http;
 
-use PhoneCom\Mason\Builder\Contrib\MasonCollection;
 use Illuminate\Http\Request;
+use PhoneCom\Mason\Builder\Contrib\MasonCollection;
 use PhoneCom\Mason\Builder\Document;
 use Illuminate\Http\JsonResponse;
 
@@ -45,10 +45,6 @@ class MasonResponse extends JsonResponse
 
         } elseif (!$document instanceof Document) {
             throw new \InvalidArgumentException(sprintf('Document is not an instance of %s', Document::class));
-        }
-
-        if ($document instanceof MasonCollection) {
-            $document->assemble();
         }
 
         $headers = array_merge(['Content-Type' => self::MIME_TYPE], self::$defaultHeaders, $headers);
