@@ -1,7 +1,7 @@
 <?php
 namespace PhoneCom\Mason\Builder\Contrib;
 
-use App\Http\Controllers\SharedSchemaController;
+use App\Http\Controllers\SharedSchemas;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -71,7 +71,7 @@ class MasonCollection extends Document
         $schema = CollectionInputSchema::make();
 
         if ($this->allowedFilterTypes) {
-            $filterDefinition = SharedSchemaController::getUrl('filtering');
+            $filterDefinition = SharedSchemas::getUrl('filtering');
             $filterOptions = JsonSchema::make();
             foreach ($this->allowedFilterTypes as $name => $filter) {
                 $params = $filter->getSchemaProperties();
@@ -84,7 +84,7 @@ class MasonCollection extends Document
         }
 
         if ($this->allowedSortTypes) {
-            $sortDefinition = SharedSchemaController::getUrl('sorting');
+            $sortDefinition = SharedSchemas::getUrl('sorting');
             $sortOptions = JsonSchema::make();
             foreach ($this->allowedSortTypes as $name => $sort) {
                 $params = [];
