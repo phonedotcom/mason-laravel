@@ -171,6 +171,11 @@ trait MasonServiceTrait
         return static::getDefaultMasonNamespace() . ':' . static::$routeName;
     }
 
+    public static function getProfileUrl()
+    {
+        return config('mason.namespaces.' . static::getDefaultMasonNamespace()) . static::$routeName;
+    }
+
     protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [])
     {
         $headers['Location'] = $url;
@@ -191,12 +196,20 @@ trait MasonServiceTrait
         array $headers = []
     ) {
 
+        $url = static::getProfileUrl();
+        $document->setMetaControl('profile', new Control($url));
+
+        if (isset($headers['Link']) && !is_array($headers['Link'])) {
+            $headers['Link'] = [$headers['Link']];
+        }
+        $headers['Link'][] = sprintf('<%s>; rel="profile"', $url);
+
         if (!isset($document->{'@controls'}->self)) {
-            $document->setControl('self', static::getMasonControl($routeParams));
+            $document->setControl('self', static::class, $routeParams);
         }
 
-        if (method_exists($this, 'addDefaultMasonNamespace')) {
-            $this->addDefaultMasonNamespace($document);
+        if (method_exists($this, 'addMasonNamespaces')) {
+            $this->addMasonNamespaces($document);
         }
 
         return MasonResponse::create($document, $request, $status, $headers, JSON_UNESCAPED_SLASHES);

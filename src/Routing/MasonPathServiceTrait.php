@@ -191,7 +191,7 @@ trait MasonPathServiceTrait
     {
         $relation = static::$relations[$verb];
         list($namespace, $suffix) = explode(':', $relation);
-        $baseUrl = config('app.mason-namespaces.' . $namespace);
+        $baseUrl = config('mason.namespaces.' . $namespace);
 
         return $baseUrl . $suffix;
     }
