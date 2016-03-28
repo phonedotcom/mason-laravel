@@ -4,7 +4,7 @@ namespace Tests\Builder\Contrib;
 use App\Models\Voip;
 use App\Models\Voip\Sms;
 use Illuminate\Http\Request;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection;
 use Tests\Integration\TestCase;
 
 class CollectionPaginationTest extends TestCase

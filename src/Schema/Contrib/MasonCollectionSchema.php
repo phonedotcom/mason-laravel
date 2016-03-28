@@ -1,8 +1,8 @@
 <?php
-namespace PhoneCom\Mason\Schema\Contrib;
+namespace Phonedotcom\Mason\Schema\Contrib;
 
-use PhoneCom\Mason\Schema\DocumentSchema;
-use PhoneCom\Mason\Schema\JsonSchema;
+use Phonedotcom\Mason\Schema\DocumentSchema;
+use Phonedotcom\Mason\Schema\JsonSchema;
 
 class MasonCollectionSchema extends DocumentSchema
 {

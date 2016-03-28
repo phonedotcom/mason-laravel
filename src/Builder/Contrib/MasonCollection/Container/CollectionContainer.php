@@ -1,9 +1,9 @@
 <?php
-namespace PhoneCom\Mason\Builder\Contrib\MasonCollection\Container;
+namespace Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Filter;
 
 class CollectionContainer implements Container
 {

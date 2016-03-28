@@ -1,7 +1,7 @@
 <?php
-namespace PhoneCom\Mason\Builder\Contrib\MasonCollection;
+namespace Phonedotcom\Mason\Builder\Contrib\MasonCollection;
 
-use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\Container;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container\Container;
 
 class Sort
 {

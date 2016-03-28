@@ -1,13 +1,13 @@
-<?php namespace PhoneCom\Mason\Routing;
+<?php namespace Phonedotcom\Mason\Routing;
 
 use Route as LaravelRoute;
 use Illuminate\Foundation\Application;
-use PhoneCom\Mason\Schema\JsonSchema;
+use Phonedotcom\Mason\Schema\JsonSchema;
 use Illuminate\Http\Request;
-use PhoneCom\Mason\Builder\Components\Control;
-use PhoneCom\Mason\Builder\Document;
-use PhoneCom\Mason\Http\MasonResponse;
-use PhoneCom\Mason\Http\SchemaResponse;
+use Phonedotcom\Mason\Builder\Components\Control;
+use Phonedotcom\Mason\Builder\Document;
+use Phonedotcom\Mason\Http\MasonResponse;
+use Phonedotcom\Mason\Http\SchemaResponse;
 
 /**
  * Sets up routes for a Mason service endpoint.  Assumes you will have one controller per URI.

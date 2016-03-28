@@ -1,21 +1,21 @@
 <?php
-namespace PhoneCom\Mason\Builder\Contrib;
+namespace Phonedotcom\Mason\Builder\Contrib;
 
 use App\Http\Controllers\SharedSchemas;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
-use PhoneCom\Mason\Builder\Child;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\CollectionContainer;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\Container;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection\Container\EloquentContainer;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection\Filter;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection\Sort;
-use PhoneCom\Mason\Builder\Document;
+use Phonedotcom\Mason\Builder\Child;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container\CollectionContainer;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container\Container;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container\EloquentContainer;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Filter;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Sort;
+use Phonedotcom\Mason\Builder\Document;
 use Illuminate\Database\Eloquent\Builder;
-use PhoneCom\Mason\Schema\Contrib\CollectionInputSchema;
-use PhoneCom\Mason\Schema\JsonSchema;
+use Phonedotcom\Mason\Schema\Contrib\CollectionInputSchema;
+use Phonedotcom\Mason\Schema\JsonSchema;
 
 class MasonCollection extends Document
 {

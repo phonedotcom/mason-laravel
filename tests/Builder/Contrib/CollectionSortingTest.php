@@ -5,8 +5,8 @@ use App\Models\Voip;
 use App\Models\Voip\Sms;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection\Sort;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Sort;
 
 class CollectionSortingTest extends TestCase
 {
