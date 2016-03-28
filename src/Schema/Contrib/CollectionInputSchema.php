@@ -1,8 +1,8 @@
 <?php
-namespace PhoneCom\Mason\Schema\Contrib;
+namespace Phonedotcom\Mason\Schema\Contrib;
 
-use PhoneCom\Mason\Schema\JsonSchema;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection;
+use Phonedotcom\Mason\Schema\JsonSchema;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection;
 
 class CollectionInputSchema extends JsonSchema
 {

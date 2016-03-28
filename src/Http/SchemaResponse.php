@@ -1,8 +1,8 @@
 <?php
-namespace PhoneCom\Mason\Http;
+namespace Phonedotcom\Mason\Http;
 
-use PhoneCom\Mason\Schema\JsonSchema;
-use PhoneCom\Mason\Schema\SubSchema;
+use Phonedotcom\Mason\Schema\JsonSchema;
+use Phonedotcom\Mason\Schema\SubSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 

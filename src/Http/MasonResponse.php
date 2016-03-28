@@ -1,9 +1,9 @@
 <?php
-namespace PhoneCom\Mason\Http;
+namespace Phonedotcom\Mason\Http;
 
 use Illuminate\Http\Request;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection;
-use PhoneCom\Mason\Builder\Document;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection;
+use Phonedotcom\Mason\Builder\Document;
 use Illuminate\Http\JsonResponse;
 
 class MasonResponse extends JsonResponse

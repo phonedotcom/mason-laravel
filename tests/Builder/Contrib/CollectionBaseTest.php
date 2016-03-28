@@ -1,11 +1,11 @@
 <?php
 namespace Tests\Builder\Contrib;
 
-use PhoneCom\Mason\Builder\Child;
+use Phonedotcom\Mason\Builder\Child;
 use App\Models\Voip;
 use App\Models\Voip\Sms;
 use Illuminate\Http\Request;
-use PhoneCom\Mason\Builder\Contrib\MasonCollection;
+use Phonedotcom\Mason\Builder\Contrib\MasonCollection;
 use Tests\Integration\TestCase;
 
 class CollectionBaseTest extends TestCase

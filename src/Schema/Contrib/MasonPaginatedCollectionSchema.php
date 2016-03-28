@@ -1,7 +1,7 @@
 <?php
-namespace PhoneCom\Mason\Schema\Contrib;
+namespace Phonedotcom\Mason\Schema\Contrib;
 
-use PhoneCom\Mason\Schema\DocumentSchema;
+use Phonedotcom\Mason\Schema\DocumentSchema;
 
 class MasonPaginatedCollectionSchema extends MasonCollectionSchema
 {

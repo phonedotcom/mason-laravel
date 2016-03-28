@@ -1,10 +1,10 @@
-<?php namespace PhoneCom\Mason\Routing;
+<?php namespace Phonedotcom\Mason\Routing;
 
 use Illuminate\Routing\Router;
-use PhoneCom\Mason\Schema\JsonSchema;
+use Phonedotcom\Mason\Schema\JsonSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use PhoneCom\Mason\Http\SchemaResponse;
+use Phonedotcom\Mason\Http\SchemaResponse;
 
 trait SchemaServiceTrait
 {
