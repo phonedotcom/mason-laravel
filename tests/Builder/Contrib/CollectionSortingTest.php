@@ -6,7 +6,7 @@ use App\Models\Voip\Sms;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use PhoneCom\Mason\Builder\Contrib\MasonCollection;
-use Tests\Integration\TestCase;
+use PhoneCom\Mason\Builder\Contrib\MasonCollection\Sort;
 
 class CollectionSortingTest extends TestCase
 {
@@ -15,9 +15,9 @@ class CollectionSortingTest extends TestCase
         $request = Request::create('/', 'GET');
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setSortTypes(['scheduled', 'created'], ['created' => 'desc'])
-            ->assemble();
+            ->populate($request, $query);
 
         $firstTimestamp = $doc->items[0]->created;
         $lastTimestamp = $doc->items[7]->created;
@@ -29,9 +29,9 @@ class CollectionSortingTest extends TestCase
         $request = Request::create('/', 'GET', ['sort' => ['created' => 'asc']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setSortTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
 
         $firstTimestamp = $doc->items[0]->created;
         $lastTimestamp = $doc->items[7]->created;
@@ -46,9 +46,9 @@ class CollectionSortingTest extends TestCase
         $request = Request::create('/', 'GET', ['sort' => ['created' => 'yak']]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
+        MasonCollection::make()
             ->setSortTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
     }
 
     public function testCanSortDesc()
@@ -56,9 +56,9 @@ class CollectionSortingTest extends TestCase
         $request = Request::create('/', 'GET', ['sort' => ['created' => 'desc']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setSortTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
 
         $firstTimestamp = $doc->items[0]->created;
         $lastTimestamp = $doc->items[7]->created;
@@ -70,11 +70,13 @@ class CollectionSortingTest extends TestCase
         $request = Request::create('/', 'GET', ['sort' => ['pogo' => 'desc']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->setSortTypes(['pogo' => function (Builder $query, $direction) {
-                $query->orderBy('created', $direction);
-            }])
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->setSortTypes([
+                Sort::make('pogo')->setFunction(function (Builder $query, $direction) {
+                    $query->orderBy('created', $direction);
+                })
+            ])
+            ->populate($request, $query);
 
         $firstCreated = $doc->items[0]->created;
         $lastCreated = $doc->items[7]->created;

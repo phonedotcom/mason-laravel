@@ -14,8 +14,8 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', []);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $this->assertEquals(10, count($doc->items));
     }
@@ -25,9 +25,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'not-empty']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(10, count($doc->items));
     }
@@ -37,9 +37,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => ['not-empty', 'contains:president']]]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(1, count($doc->items));
     }
@@ -49,9 +49,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['scheduled' => 'empty']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['scheduled'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(6, count($doc->items));
     }
@@ -61,9 +61,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['scheduled' => 'not-empty']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['scheduled'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(4, count($doc->items));
     }
@@ -73,9 +73,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'eq:Hello world!']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(2, count($doc->items));
     }
@@ -85,9 +85,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'ne:Hello world!']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(8, count($doc->items));
     }
@@ -99,9 +99,9 @@ class CollectionFilteringTest extends TestCase
         ]]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(3, count($doc->items));
     }
@@ -113,9 +113,9 @@ class CollectionFilteringTest extends TestCase
         ]]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(4, count($doc->items));
     }
@@ -127,9 +127,9 @@ class CollectionFilteringTest extends TestCase
         ]]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(6, count($doc->items));
     }
@@ -141,9 +141,9 @@ class CollectionFilteringTest extends TestCase
         ]]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(7, count($doc->items));
     }
@@ -153,9 +153,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'starts-with:Whatever']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(1, count($doc->items));
     }
@@ -165,9 +165,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'ends-with:rock']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(1, count($doc->items));
     }
@@ -177,9 +177,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'contains:love']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(2, count($doc->items));
     }
@@ -189,9 +189,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'not-starts-with:Whatever']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(9, count($doc->items));
     }
@@ -201,9 +201,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'not-ends-with:rock']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(9, count($doc->items));
     }
@@ -213,9 +213,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'not-contains:love']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(8, count($doc->items));
     }
@@ -227,9 +227,9 @@ class CollectionFilteringTest extends TestCase
         ]]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(3, count($doc->items));
     }
@@ -243,9 +243,9 @@ class CollectionFilteringTest extends TestCase
         ]]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(7, count($doc->items));
     }
@@ -258,9 +258,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['snake' => 'empty']]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
+        MasonCollection::make()
             ->setFilterTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
     }
 
     /**
@@ -271,9 +271,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['created' => 'jumps']]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
+        MasonCollection::make()
             ->setFilterTypes(['created'])
-            ->assemble();
+            ->populate($request, $query);
     }
 
     /**
@@ -284,9 +284,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'equals:fifteen,planet']]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
+        MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
     }
 
     public function testCanEscapeCommaInFilterParam()
@@ -294,9 +294,9 @@ class CollectionFilteringTest extends TestCase
         $request = Request::create('/', 'GET', ['filter' => ['content' => 'contains:got it\, lol']]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
+        $doc = MasonCollection::make()
             ->setFilterTypes(['content'])
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertEquals(1, count($doc->items));
     }

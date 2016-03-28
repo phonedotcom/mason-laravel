@@ -14,8 +14,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['page_size' => 2]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $this->assertEquals(5, $doc->total_pages);
         $this->assertEquals(2, count($doc->items));
@@ -26,16 +26,16 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['page' => 1, 'page_size' => 2]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $firstPageFirstItemId = $doc->items[0]->id;
 
         $request = Request::create('/', 'GET', ['page' => 3, 'page_size' => 2]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $this->assertNotEquals($firstPageFirstItemId, $doc->items[0]->id);
     }
@@ -48,8 +48,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['page_size' => 9999999]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
-            ->assemble();
+        MasonCollection::make()
+            ->populate($request, $query);
     }
 
     /**
@@ -60,8 +60,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['page_size' => -2]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
-            ->assemble();
+        MasonCollection::make()
+            ->populate($request, $query);
     }
 
     /**
@@ -72,8 +72,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['page' => -2]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
-            ->assemble();
+        MasonCollection::make()
+            ->populate($request, $query);
     }
 
     public function testHumongousPageNumberGivesZeroItems()
@@ -81,8 +81,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['page' => 99999]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $this->assertEquals(0, count($doc->items));
     }
@@ -92,8 +92,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['limit' => 3]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $this->assertEquals(3, $doc->limit);
         $this->assertEquals(3, count($doc->items));
@@ -104,16 +104,16 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['offset' => 0, 'limit' => 2]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $firstPageFirstItemId = $doc->items[0]->id;
 
         $request = Request::create('/', 'GET', ['offset' => 1, 'limit' => 2]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $this->assertNotEquals($firstPageFirstItemId, $doc->items[0]->id);
     }
@@ -127,8 +127,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['limit' => 9999999]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
-            ->assemble();
+        MasonCollection::make()
+            ->populate($request, $query);
     }
 
     /**
@@ -139,8 +139,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['limit' => -2]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
-            ->assemble();
+        MasonCollection::make()
+            ->populate($request, $query);
     }
 
     /**
@@ -151,8 +151,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['offset' => -2]);
         $query = Sms::where('voip_id', 1);
 
-        (new MasonCollection($request, $query))
-            ->assemble();
+        MasonCollection::make()
+            ->populate($request, $query);
     }
 
     public function testHumongousOffsetGivesZeroItems()
@@ -160,8 +160,8 @@ class CollectionPaginationTest extends TestCase
         $request = Request::create('/', 'GET', ['offset' => 99999]);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $this->assertEquals(0, count($doc->items));
     }

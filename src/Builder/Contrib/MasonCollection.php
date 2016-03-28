@@ -201,10 +201,10 @@ class MasonCollection extends Document
     }
 
     /**
-     * Assemble the Mason document based on the inputs
+     * Populate the Mason document based on the inputs
      * @return $this
      */
-    public function assemble(Request $request = null, $container = null)
+    public function populate(Request $request = null, $container = null)
     {
         if ($container instanceof Builder) {
             $container = new EloquentContainer($container);
@@ -247,7 +247,7 @@ class MasonCollection extends Document
         foreach ($rawItems as $index => $rawItem) {
             if ($this->itemRenderer) {
                 $item = new Child();
-                call_user_func_array($this->itemRenderer, [$item, $rawItem, $renderFull]);
+                call_user_func_array($this->itemRenderer, [$request, $item, $rawItem, $renderFull]);
 
             } elseif (is_object($rawItem)) {
                 if ($renderFull && method_exists($rawItem, 'toFullMason')) {

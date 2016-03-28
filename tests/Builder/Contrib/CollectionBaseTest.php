@@ -15,7 +15,8 @@ class CollectionBaseTest extends TestCase
         $request = Request::create('/', 'GET', []);
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))->assemble();
+        $doc = MasonCollection::make()
+            ->populate($request, $query);
 
         $this->assertEquals(10, count($doc->items));
     }
@@ -25,11 +26,11 @@ class CollectionBaseTest extends TestCase
         $request = Request::create('/', 'GET');
         $query = Sms::where('voip_id', 1);
 
-        $doc = (new MasonCollection($request, $query))
-            ->setItemRenderer(function (Child $childDoc, Sms $sms) {
+        $doc = MasonCollection::make()
+            ->setItemRenderer(function (Request $request, Child $childDoc, Sms $sms) {
                 $childDoc->setProperty('the_big_id', $sms->id);
             })
-            ->assemble();
+            ->populate($request, $query);
 
         $this->assertNotEmpty($doc->items[0]->the_big_id);
     }

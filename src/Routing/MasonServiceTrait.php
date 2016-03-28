@@ -114,12 +114,7 @@ trait MasonServiceTrait
 
     private static function getInputSchemaRouteName()
     {
-        return 'schemas.' . strtolower(static::$verb) . '.' . static::$routeName . '.input';
-    }
-
-    private static function getSchemaRouteName()
-    {
-        return 'schemas.' . strtolower(static::$verb) . '.' . static::$routeName;
+        return 'inputs.' . static::$routeName . '.' . strtolower(static::$verb);
     }
 
     public static function getUrl(array $params = [])
@@ -182,11 +177,6 @@ trait MasonServiceTrait
         $headers['Location'] = $url;
 
         return $this->makeMasonResponse($document, $request, [], 201, $headers);
-    }
-
-    public static function getSchemaUrl()
-    {
-        return route(static::getSchemaRouteName());
     }
 
     public static function getInputSchemaUrl()

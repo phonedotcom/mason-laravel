@@ -51,7 +51,7 @@ $document = new MasonCollection($request, $container);
 $document->setFilterTypes(['make', 'model', 'year'])
     ->setSortTypes(['id', 'year'], ['id' => 'desc'])
     ->setControl('home', '/')
-    ->assemble();
+    ->populate();
     
 echo json_encode($document);
 ```
@@ -152,7 +152,7 @@ We have also included a `MasonResponse` class which helps to produce a Laravel r
 
 * Automatically responds to Mason's `Prefer: representation=minimal` request header
 * Respects `Etag` caching by adding this header on all responses and responding appropriately to `If-None-Match` request headers
-* Executes the `assemble()` method if the input is a `MasonCollection`
+* Executes the `populate()` method if the input is a `MasonCollection`
 * Adds the Mason `Content-Type` response header
 * Sorts the output properties in a logical manner which attempts to place your data higher up in the document ("above the fold") and leaves the Mason housekeeping items further down.
 
