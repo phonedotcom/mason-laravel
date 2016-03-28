@@ -19,10 +19,9 @@ trait MasonServiceTrait
 {
     public static function registerRoute($router)
     {
-        if (empty(static::$routeName) || empty(static::$routePath)
-            || empty(static::$verb) || empty(static::$relation)) {
+        if (empty(static::$routeName) || empty(static::$routePath) || empty(static::$verb)) {
             throw new \Exception(sprintf(
-                'Service has no routeName, routePath, verb, and/or relation defined: %s',
+                'Controller has no routeName, routePath, and/or verb defined: %s',
                 get_called_class()
             ));
         }
@@ -30,12 +29,12 @@ trait MasonServiceTrait
         $path = static::$routePath;
         $class = get_called_class();
 
-        $method = strtolower(static::$verb);
-        $router->$method($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
+        $verb = strtolower(static::$verb);
+        $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
 
-        $methods = get_class_methods(static::class);
+        $functions = get_class_methods(static::class);
 
-        if (in_array('inputSchema', $methods)) {
+        if (in_array('inputSchema', $functions)) {
             $router->get(self::getInputSchemaPath(), [
                 'as' => self::getInputSchemaRouteName(), 'uses' => "$class@inputSchema"
             ]);
@@ -62,7 +61,7 @@ trait MasonServiceTrait
 
     private static function getInputSchemaPath()
     {
-        return '/inputs/' . preg_replace("/[^\w-]/", '/', static::$relation);
+        return '/inputs/' . self::getDefaultMasonNamespace() . '/' . static::$routeName;
     }
 
     public static function getMasonControl($params = [])
@@ -169,7 +168,7 @@ trait MasonServiceTrait
 
     public static function getRelation()
     {
-        return static::$relation;
+        return static::getDefaultMasonNamespace() . ':' . static::$routeName;
     }
 
     protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [])
