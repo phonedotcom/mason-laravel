@@ -459,7 +459,7 @@ class MasonCollection extends Document
             $paramString = str_replace('\,', '|#$DELIMITER$#|', $paramString);
             $params = explode(',', $paramString);
             array_walk($params, function (&$value) {
-                $value = trim(str_replace('|#$DELIMITER$#|', ',', $value));
+                $value = str_replace('|#$DELIMITER$#|', ',', $value);
             });
         } else {
             $params = [];
