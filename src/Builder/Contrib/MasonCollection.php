@@ -18,9 +18,6 @@ use Phonedotcom\Mason\Schema\JsonSchema;
 
 class MasonCollection extends Document
 {
-    const DEFAULT_PER_PAGE = 10;
-    const MAX_PER_PAGE = 500;
-
     private static $filterOperators = [
         // zero-argument operators
         0 => ['empty', 'not-empty'],
@@ -38,6 +35,8 @@ class MasonCollection extends Document
         'unlimited' => ['in', 'not-in']
     ];
 
+    private $pageSize = 10;
+    private $maxPerPage = 500;
     private $defaultSorting = [];
     private $allowedFilterTypes = [];
     private $allowedSortTypes = [];
@@ -53,6 +52,20 @@ class MasonCollection extends Document
         // the populate() method to be called after the configuration is set up.
     }
 
+    public function setMaxPerPage($max)
+    {
+        $this->maxPerPage = $max;
+
+        return $this;
+    }
+
+    public function setPageSize($size)
+    {
+        $this->pageSize = $size;
+
+        return $this;
+    }
+
     public static function getSupportedQueryParamNames()
     {
         return ['limit', 'offset', 'sort', 'filters', 'fields'];
@@ -63,27 +76,25 @@ class MasonCollection extends Document
         $schema = CollectionInputSchema::make();
 
         if ($this->allowedFilterTypes) {
-            $filterDefinition = SharedSchemas::getUrl('filtering');
             $filterOptions = JsonSchema::make();
             foreach ($this->allowedFilterTypes as $name => $filter) {
                 $params = $filter->getSchemaProperties();
                 if ($filter->getTitle()) {
                     $params['title'] = 'Filter by ' . $filter->getTitle();
                 }
-                $filterOptions->setPropertyRef($name, $filterDefinition, $params);
+                $filterOptions->setPropertyRef($name, '#/definitions/filtering', $params);
             }
             $schema->setProperty('filters', $filterOptions);
         }
 
         if ($this->allowedSortTypes) {
-            $sortDefinition = SharedSchemas::getUrl('sorting');
             $sortOptions = JsonSchema::make();
             foreach ($this->allowedSortTypes as $name => $sort) {
                 $params = [];
                 if ($sort->getTitle()) {
                     $params['title'] = 'Sort by ' . $sort->getTitle();
                 }
-                $sortOptions->setPropertyRef($name, $sortDefinition, $params);
+                $sortOptions->setPropertyRef($name, '#/definitions/sorting', $params);
             }
             $schema->setProperty('sort', $sortOptions);
         }
@@ -212,7 +223,7 @@ class MasonCollection extends Document
         $this->applyFiltering($request, $container);
         $this->applySorting($request, $container);
 
-        $limit = (int)$request->input('limit', self::DEFAULT_PER_PAGE);
+        $limit = (int)$request->input('limit', $this->pageSize);
         if ($limit < 1) {
             $limit = 1;
         }
@@ -303,7 +314,7 @@ class MasonCollection extends Document
     private function assertValidInputs(Request $request)
     {
         $rules = [
-            'limit' => 'sometimes|integer|min:1|max:' . self::MAX_PER_PAGE,
+            'limit' => 'sometimes|integer|min:1|max:' . $this->maxPerPage,
             'offset' => 'sometimes|integer|min:0',
             'sort' => 'sometimes|array|sorting:' . join(',', $this->getValidSortTypes()),
             'filters' => 'sometimes|array',
