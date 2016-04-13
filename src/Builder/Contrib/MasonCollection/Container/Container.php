@@ -1,7 +1,6 @@
 <?php
 namespace Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container;
 
-use Illuminate\Database\Eloquent\Builder;
 use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Filter;
 
 interface Container

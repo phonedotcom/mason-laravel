@@ -1,8 +1,8 @@
 <?php
 namespace Phonedotcom\Mason\Builder\Contrib;
 
-use App\Http\Controllers\SharedSchemas;
 use Illuminate\Contracts\Validation\ValidationException;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
@@ -13,7 +13,6 @@ use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container\EloquentContaine
 use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Filter;
 use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Sort;
 use Phonedotcom\Mason\Builder\Document;
-use Illuminate\Database\Eloquent\Builder;
 use Phonedotcom\Mason\Schema\Contrib\CollectionInputSchema;
 use Phonedotcom\Mason\Schema\JsonSchema;
 
@@ -50,15 +49,8 @@ class MasonCollection extends Document
 
     public function __construct()
     {
-        $args = func_get_args();
-        if (!empty($args[0])) {
-            $this->request = $args[0];
-            if (!empty($args[1])) {
-                $this->container = $args[1];
-            }
-        }
-
-        parent::__construct();
+        // No op -- We don't want to pass properties into the parent's constructor, since we are requiring
+        // the populate() method to be called after the configuration is set up.
     }
 
     public static function getSupportedQueryParamNames()

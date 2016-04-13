@@ -6,7 +6,6 @@ use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Phonedotcom\Mason\Schema\JsonSchema;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Phonedotcom\Mason\Builder\Components\Control;
 use Phonedotcom\Mason\Builder\Document;
 use Phonedotcom\Mason\Http\MasonResponse;

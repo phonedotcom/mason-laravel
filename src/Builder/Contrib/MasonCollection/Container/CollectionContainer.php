@@ -1,7 +1,6 @@
 <?php
 namespace Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Filter;
 

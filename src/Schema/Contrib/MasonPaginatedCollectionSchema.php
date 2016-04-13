@@ -1,8 +1,6 @@
 <?php
 namespace Phonedotcom\Mason\Schema\Contrib;
 
-use Phonedotcom\Mason\Schema\DocumentSchema;
-
 class MasonPaginatedCollectionSchema extends MasonCollectionSchema
 {
     public function __construct($properties = [])
