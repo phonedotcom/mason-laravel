@@ -29,7 +29,10 @@ trait MasonServiceTrait
         $class = get_called_class();
 
         $verb = strtolower(static::$verb);
-        $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
+        $route = $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
+        if (!empty(static::$routeConstraints)) {
+            $route->where(static::$routeConstraints);
+        }
 
         $functions = get_class_methods(static::class);
 
