@@ -59,11 +59,21 @@ class MasonCollection extends Document
         return $this;
     }
 
+    public function getMaxPerPage()
+    {
+        return $this->maxPerPage;
+    }
+
     public function setPageSize($size)
     {
         $this->pageSize = $size;
 
         return $this;
+    }
+
+    public function getPageSize()
+    {
+        return $this->pageSize;
     }
 
     public static function getSupportedQueryParamNames()
@@ -324,6 +334,7 @@ class MasonCollection extends Document
         $filters = $request->get('filters');
         if ($filters && is_array($filters)) {
             $filterList = join(',', $this->getValidFilterTypes());
+
             foreach ($filters as $key => $value) {
                 $rules["filters.$key"] = "required|filter_type:$filterList";
 
