@@ -29,10 +29,7 @@ trait MasonServiceTrait
         $class = get_called_class();
 
         $verb = strtolower(static::$verb);
-        $route = $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
-        if (!empty(static::$routeConstraints)) {
-            $route->where(static::$routeConstraints);
-        }
+        $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
 
         $functions = get_class_methods(static::class);
 
@@ -63,7 +60,7 @@ trait MasonServiceTrait
 
     private static function getInputSchemaPath()
     {
-        return '/inputs/' . self::getDefaultMasonNamespace() . '/' . static::$routeName;
+        return '/inputs/' . static::$routeName;
     }
 
     public static function getMasonControl($params = [])
