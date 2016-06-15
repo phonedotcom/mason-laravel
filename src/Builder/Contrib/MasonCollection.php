@@ -217,7 +217,7 @@ class MasonCollection extends Document
      * Populate the Mason document based on the inputs
      * @return $this
      */
-    public function populate(Request $request = null, $container = null)
+    public function populate(Request $request = null, $container = null, $extraModelParams = [])
     {
         if ($container instanceof Builder) {
             $container = new EloquentContainer($container);
@@ -246,12 +246,12 @@ class MasonCollection extends Document
         list($items, $totalItems) = $container->getItems($limit, $offset);
 
         $this->addPaginationProperties($request, $totalItems, $offset, $limit);
-        $this->setProperty('items', $this->getRenderedItemList($request, $items));
+        $this->setProperty('items', $this->getRenderedItemList($request, $items, $extraModelParams));
 
         return $this;
     }
 
-    private function getRenderedItemList(Request $request, $rawItems)
+    private function getRenderedItemList(Request $request, $rawItems, $extraParams = [])
     {
         $fields = $request->input('fields');
         $renderFull = ($fields === null || in_array($request->input('fields'), ['all', 'full']));
@@ -264,10 +264,10 @@ class MasonCollection extends Document
 
             } elseif (is_object($rawItem)) {
                 if ($renderFull && method_exists($rawItem, 'toFullMason')) {
-                    $item = $rawItem->toFullMason();
+                    $item = $rawItem->toFullMason($extraParams);
 
                 } elseif (!$renderFull && method_exists($rawItem, 'toBriefMason')) {
-                    $item = $rawItem->toBriefMason();
+                    $item = $rawItem->toBriefMason($extraParams);
 
                 } else {
                     $item = get_object_vars($rawItem);

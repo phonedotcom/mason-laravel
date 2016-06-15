@@ -17,7 +17,10 @@ trait SchemaServiceTrait
         $path = static::$routePath;
         $class = get_called_class();
 
-        $router->get($path, ['as' => static::$routeName, 'uses' => "$class@schema"]);
+        $route = $router->get($path, ['as' => static::$routeName, 'uses' => "$class@schema"]);
+        if (!empty(static::$routePatterns)) {
+            $route->where(static::$routePatterns);
+        }
 
         if (!self::pathIsRegistered($router, $path)) {
             $router->options($path, ['uses' => "$class@options"]);

@@ -29,14 +29,20 @@ trait MasonServiceTrait
         $class = get_called_class();
 
         $verb = strtolower(static::$verb);
-        $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
+        $route = $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
+        if (!empty(static::$routePatterns)) {
+            $route->where(static::$routePatterns);
+        }
 
         $functions = get_class_methods(static::class);
 
         if (in_array('inputSchema', $functions)) {
-            $router->get(self::getInputSchemaPath(), [
+            $schemaRoute = $router->get(static::getInputSchemaPath(), [
                 'as' => self::getInputSchemaRouteName(), 'uses' => "$class@inputSchema"
             ]);
+            if (!empty(static::$inputSchemaRoutePatterns)) {
+                $schemaRoute->where(static::$inputSchemaRoutePatterns);
+            }
         }
 
         if (!self::pathIsRegistered($router, $path)) {
@@ -60,10 +66,14 @@ trait MasonServiceTrait
 
     private static function getInputSchemaPath()
     {
-        return '/inputs/' . static::$routeName;
+        if (!empty(static::$inputSchemaRoutePathPrefix)) {
+            return rtrim(static::$inputSchemaRoutePathPrefix, '/') . '/inputs/' . static::$routeName;
+        } else {
+            return '/inputs/' . static::$routeName;
+        }
     }
 
-    public static function getMasonControl($params = [])
+    public static function getMasonControl($params = [], $schemaUrlParams = [])
     {
         $fieldNames = [
             'title', 'description', 'isHrefTemplate', 'schemaUrl', 'schema', 'template', 'accept',
@@ -85,7 +95,7 @@ trait MasonServiceTrait
 
         if (in_array('inputSchema', get_class_methods(static::class))) {
             if (!isset($properties['schemaUrl'])) {
-                $properties['schemaUrl'] = route(static::getInputSchemaRouteName());
+                $properties['schemaUrl'] = route(static::getInputSchemaRouteName(), $schemaUrlParams);
             }
 
             if (!$isGet && !isset($properties['encoding'])) {
@@ -191,6 +201,7 @@ trait MasonServiceTrait
         Document $document,
         Request $request,
         array $routeParams = [],
+        array $schemaUrlRouteParams = [],
         $status = 200,
         array $headers = []
     ) {
@@ -204,11 +215,11 @@ trait MasonServiceTrait
         $headers['Link'][] = sprintf('<%s>; rel="profile"', $url);
 
         if (!isset($document->{'@controls'}->self)) {
-            $document->setControl('self', static::class, $routeParams);
+            $document->setControl('self', static::class, $routeParams, $schemaUrlRouteParams);
         }
 
         if (method_exists($this, 'addMasonNamespaces')) {
-            $this->addMasonNamespaces($document);
+            $this->addMasonNamespaces($document); // TODO: Insert version here too???
         }
 
         return MasonResponse::create($document, $request, $status, $headers, JSON_UNESCAPED_SLASHES);
