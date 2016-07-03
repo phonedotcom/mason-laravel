@@ -35,7 +35,7 @@ class MasonCollection extends Document
         'unlimited' => ['in', 'not-in']
     ];
 
-    private $pageSize = 10;
+    private $pageSize = 25;
     private $maxPerPage = 500;
     private $defaultSorting = [];
     private $allowedFilterTypes = [];
