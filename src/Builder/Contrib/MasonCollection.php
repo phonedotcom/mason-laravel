@@ -291,20 +291,15 @@ class MasonCollection extends Document
             'limit' => $limit
         ]);
 
-        $totalPages = ceil($totalItems / $limit);
-        $currentPage = ceil(($offset + 1) / $limit);
-
-        if ($totalPages > 1) {
-            $this->setControl('first', $this->url($request, $this->pageNumToOffset(1, $limit)));
+        $this->setControl('first', $this->url($request, 0));
+        if ($offset > 0) {
+            $this->setControl('prev', $this->url($request, ($offset - $limit > 0 ? $offset - $limit : 0)));
         }
-        if ($currentPage > 1) {
-            $this->setControl('prev', $this->url($request, $this->pageNumToOffset($currentPage - 1, $limit)));
+        if ($offset + $limit < $totalItems) {
+            $this->setControl('next', $this->url($request, $offset + $limit));
         }
-        if ($currentPage < $totalPages) {
-            $this->setControl('next', $this->url($request, $this->pageNumToOffset($currentPage + 1, $limit)));
-        }
-        if ($totalPages > 1) {
-            $this->setControl('last', $this->url($request, $this->pageNumToOffset($totalPages, $limit)));
+        if (floor($totalItems / $limit) > 1) {
+            $this->setControl('last', $this->url($request, floor($totalItems / $limit) * $limit));
         }
     }
 
@@ -314,11 +309,6 @@ class MasonCollection extends Document
         $parameters['offset'] = $offset;
 
         return $request->url() . '?' . http_build_query($parameters);
-    }
-
-    private function pageNumToOffset($page, $limit)
-    {
-        return ($page - 1) * $limit;
     }
 
     private function assertValidInputs(Request $request)
