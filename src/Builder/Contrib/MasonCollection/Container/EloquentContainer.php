@@ -3,6 +3,7 @@ namespace Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container;
 
 use Illuminate\Database\Eloquent\Builder;
 use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Filter;
+use DB;
 
 class EloquentContainer implements Container
 {
@@ -147,10 +148,12 @@ class EloquentContainer implements Container
     {
         $builder = $this->query->getQuery();
         if ($builder->groups || $builder->unions) {
-            $total = \DB::selectOne(
+            $row = DB::selectOne(
                 "SELECT COUNT(*) qty FROM (" . $this->query->toSql() . ") sub",
                 $this->query->getBindings()
-            )->qty;
+            );
+            $total = (int)$row->qty;
+
         } else {
             $total = $this->query->count();
         }
