@@ -145,17 +145,16 @@ class EloquentContainer implements Container
 
     public function getItems($limit, $offset)
     {
-        /* Use query builder count for cross-DBMS compatibility */
-        $total = $this->query->count();
-        /**/
-        
-        /* versatile count for complicated queries such as union *
-        $total = \DB::select(
-            "SELECT COUNT(*) AS qty FROM (" . $this->query->toSql() . ") AS sub",
-            $this->query->getBindings()
-        )[0]->qty;
-        /**/
-        
+        $builder = $this->query->getQuery();
+        if ($builder->groups || $builder->unions) {
+            $total = \DB::selectOne(
+                "SELECT COUNT(*) qty FROM (" . $this->query->toSql() . ") sub",
+                $this->query->getBindings()
+            )->qty;
+        } else {
+            $total = $this->query->count();
+        }
+
         $pageOfItems = $this->query->skip($offset)->take($limit)->get();
 
         return [$pageOfItems, $total];
