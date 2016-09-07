@@ -16,9 +16,9 @@
   "require": {
     "php": ">=5.5",
     "phonedotcom/mason-php": "1.*",
-    "illuminate/support": "5.2.*",
-    "illuminate/http": "5.2.*",
-    "illuminate/database": "5.2.*"
+    "illuminate/support": ">=5.2",
+    "illuminate/http": ">=5.2",
+    "illuminate/database": ">=5.2"
   },
   "require-dev": {
     "phpunit/phpunit": "4.*",
