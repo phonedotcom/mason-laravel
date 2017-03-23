@@ -31,6 +31,12 @@ trait MasonServiceTrait
         $verb = strtolower(static::$verb);
         $router->$verb($path, ['as' => static::$routeName, 'uses' => "$class@action"]);
 
+        if (!empty(static::$altRoutePath)) {
+            foreach (static::$altRoutePath as $altPath) {
+                $router->$verb($altPath, ['uses' => "$class@action"]);
+            }
+        }
+
         $functions = get_class_methods(static::class);
 
         if (in_array('inputSchema', $functions)) {
