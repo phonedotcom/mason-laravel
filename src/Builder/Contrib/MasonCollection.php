@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\MessageBag;
 use Phonedotcom\Mason\Builder\Child;
 use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container\CollectionContainer;
 use Phonedotcom\Mason\Builder\Contrib\MasonCollection\Container\Container;
