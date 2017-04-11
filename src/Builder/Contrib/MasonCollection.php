@@ -424,17 +424,31 @@ class MasonCollection extends Document
         $filters = $request->input('filters', []);
         if ($filters) {
 
+            $errors = [];
+
             foreach ($filters as $name => $subfilters) {
 
-                if (is_scalar($subfilters)) {
-                    $subfilters = [$subfilters];
-                }
+                if (isset($this->allowedFilterTypes[$name])) {
 
-                foreach ($subfilters as $subfilter) {
-                    list($operator, $params) = self::parseFilterItem($subfilter);
-                    $this->allowedFilterTypes[$name]->apply($container, $operator, $params);
+                    if (is_scalar($subfilters)) {
+                        $subfilters = [$subfilters];
+                    }
+
+                    $supportedOperators = $this->allowedFilterTypes[$name]->getSupportedOperators();
+                    foreach ($subfilters as $subfilter) {
+                        list($operator, $params) = self::parseFilterItem($subfilter);
+                        if (!is_null($supportedOperators) && !in_array($operator, $supportedOperators)) {
+                            $errors['filters.' . $name] = 'Operator "' . $operator . '" is not supported';
+                        }
+                        $this->allowedFilterTypes[$name]->apply($container, $operator, $params);
+                    }
                 }
             }
+
+            if ($errors){
+                throw new ValidationException(new MessageBag($errors));
+            }
+
         }
 
         $this->setProperty('filters', (object)$filters);
