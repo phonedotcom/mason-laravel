@@ -76,6 +76,12 @@ class CollectionContainer implements Container
                 case 'not-contains':
                     return (!preg_match("/" . preg_quote($params[0]) . "/i", $item->{$field}));
 
+                case 'sounds':
+                    return soundex($params[0]) == soundex($item->{$field});
+
+                case 'not-sounds':
+                    return soundex($params[0]) != soundex($item->{$field});
+
                 // Dual-parameter operators
 
                 case 'between':
