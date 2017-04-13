@@ -118,11 +118,11 @@ class EloquentContainer implements Container
                 break;
 
             case 'sounds':
-                $this->query->whereRaw('SOUNDEX(' . $column .') = SOUNDEX(%s)', [$params[0]]);
+                $this->query->whereRaw('SOUNDEX(' . $column .') = SOUNDEX(?)', [$params[0]]);
                 break;
 
             case 'not-sounds':
-                $this->query->whereRaw('SOUNDEX(' . $column .') != SOUNDEX(%s)', [$params[0]]);
+                $this->query->whereRaw('SOUNDEX(' . $column .') != SOUNDEX(?)', [$params[0]]);
                 break;
 
             // Dual-parameter operators
