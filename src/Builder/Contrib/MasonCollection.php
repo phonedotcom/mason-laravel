@@ -26,7 +26,8 @@ class MasonCollection extends Document
         // one-argument operators
         1 => [
             'eq', 'ne', 'lt', 'gt', 'lte', 'gte',
-            'starts-with', 'ends-with', 'contains', 'not-starts-with', 'not-ends-with', 'not-contains'
+            'starts-with', 'ends-with', 'contains', 'not-starts-with', 'not-ends-with', 'not-contains',
+            'sounds', 'not-sounds'
         ],
 
         // two-argument operators
