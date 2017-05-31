@@ -181,11 +181,12 @@ trait MasonServiceTrait
         return config('mason.namespaces.' . static::getDefaultMasonNamespace()) . static::$routeName;
     }
 
-    protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [])
+    protected function makeMasonItemCreatedResponse(Document $document, Request $request, $url, array $headers = [],
+                                                    array $routeParams = [])
     {
         $headers['Location'] = $url;
 
-        return $this->makeMasonResponse($document, $request, [], 201, $headers);
+        return $this->makeMasonResponse($document, $request, $routeParams, 201, $headers);
     }
 
     public static function getInputSchemaUrl()
