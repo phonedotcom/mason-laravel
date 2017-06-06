@@ -466,7 +466,10 @@ class MasonCollection extends Document
         $foundOperator = false;
         foreach (self::$filterOperators as $paramCount => $operators) {
             if (in_array($operator, $operators)) {
-                $foundOperator = true;
+                $countParts = count($parts) ;
+                if ((($paramCount === 'unlimited') && ($countParts > 0)) || ($countParts === $paramCount)){
+                    $foundOperator = true;
+                }
                 break;
             }
         }
