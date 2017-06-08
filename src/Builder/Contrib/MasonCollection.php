@@ -465,7 +465,10 @@ class MasonCollection extends Document
 
         $foundOperator = false;
         foreach (self::$filterOperators as $paramCount => $operators) {
-            if (in_array($operator, $operators)) {
+            // The count($parts) is critical because an operator not followed by a colon is to be considered a value
+            // this is e.g. important for things like filters[direction]=in given that in is also an operator name so
+            // there is ambiguity here
+            if (in_array($operator, $operators) && count($parts) > 0) {
                 $foundOperator = true;
                 break;
             }
