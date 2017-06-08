@@ -468,7 +468,7 @@ class MasonCollection extends Document
             // The count($parts) is critical because an operator not followed by a colon is to be considered a value
             // this is e.g. important for things like filters[direction]=in given that in is also an operator name so
             // there is ambiguity here
-            if (in_array($operator, $operators) && ($paramCount == 0 || count($parts) > 0)) {
+            if (in_array($operator, $operators) && ($paramCount === 0 || count($parts) > 0)) {
                 $foundOperator = true;
                 break;
             }
