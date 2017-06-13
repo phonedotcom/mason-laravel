@@ -39,7 +39,7 @@ class CollectionSortingTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testInvalidSortDirectionFails()
     {

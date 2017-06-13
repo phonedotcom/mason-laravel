@@ -251,7 +251,7 @@ class CollectionFilteringTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testInvalidFilterColumnFails()
     {
@@ -264,7 +264,7 @@ class CollectionFilteringTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testInvalidFilterOperatorFails()
     {
@@ -277,7 +277,7 @@ class CollectionFilteringTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testInvalidFilterParamCountFails()
     {

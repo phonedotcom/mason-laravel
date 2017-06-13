@@ -1,7 +1,7 @@
 <?php
 namespace Phonedotcom\Mason\Builder\Contrib;
 
-use Illuminate\Contracts\Validation\ValidationException;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;

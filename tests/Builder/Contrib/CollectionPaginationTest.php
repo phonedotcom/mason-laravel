@@ -41,7 +41,7 @@ class CollectionPaginationTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testHumongousPageSizeFails()
     {
@@ -53,7 +53,7 @@ class CollectionPaginationTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testNegativePageSizeFails()
     {
@@ -65,7 +65,7 @@ class CollectionPaginationTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testNegativePageNumberFails()
     {
@@ -120,7 +120,7 @@ class CollectionPaginationTest extends TestCase
 
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testHumongousLimitFails()
     {
@@ -132,7 +132,7 @@ class CollectionPaginationTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testNegativeLimitFails()
     {
@@ -144,7 +144,7 @@ class CollectionPaginationTest extends TestCase
     }
 
     /**
-     * @expectedException \Illuminate\Contracts\Validation\ValidationException
+     * @expectedException \Illuminate\Validation\ValidationException
      */
     public function testNegativeOffsetFails()
     {
