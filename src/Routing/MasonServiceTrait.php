@@ -54,7 +54,7 @@ trait MasonServiceTrait
     {
         if ($router instanceof Router) {
             foreach ($router->getRoutes() as $route) {
-                if (in_array('OPTIONS', $route->getMethods()) && $route->getPath() == $path) {
+                if (in_array('OPTIONS', $route->methods()) && $route->uri() == $path) {
                     return true;
                 }
             }
@@ -131,13 +131,13 @@ trait MasonServiceTrait
         $supportedVerbs = [];
 
         if (app() instanceof Application) {
-            $currentPathInfo = LaravelRoute::current()->getPath();
+            $currentPathInfo = LaravelRoute::current()->uri();
 
             $router = app('Illuminate\\Routing\\Router');
 
             foreach ($router->getRoutes() as $route) {
-                if ($route->getPath() == $currentPathInfo) {
-                    $supportedVerbs = array_merge($supportedVerbs, $route->getMethods());
+                if ($route->uri() == $currentPathInfo) {
+                    $supportedVerbs = array_merge($supportedVerbs, $route->methods());
                 }
             }
             if (in_array('GET', $supportedVerbs) && !in_array('HEAD', $supportedVerbs)) {

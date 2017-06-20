@@ -28,7 +28,7 @@ trait SchemaServiceTrait
     {
         if ($router instanceof Router) {
             foreach ($router->getRoutes() as $route) {
-                if (in_array('OPTIONS', $route->getMethods()) && $route->getPath() == $path) {
+                if (in_array('OPTIONS', $route->methods()) && $route->uri() == $path) {
                     return true;
                 }
             }
