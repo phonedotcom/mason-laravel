@@ -216,11 +216,34 @@ class MasonCollection extends Document
     }
 
     /**
+     * Delete the data based on the inputs
+     * @return $this
+     */
+    public function delete(Request $request = null, $container = null)
+    {
+        list($limit, $offset) = $this->prepareCollectionRequest($request, $container);
+        $success = $container->deleteItems($limit, $offset);
+        $this->setProperty('success', $success);
+        return $this;
+    }
+
+    /**
      * Populate the Mason document based on the inputs
      * @return $this
      */
     public function populate(Request $request = null, $container = null)
     {
+        list($limit, $offset) = $this->prepareCollectionRequest($request, $container);
+
+        list($items, $totalItems) = $container->getItems($limit, $offset);
+
+        $this->addPaginationProperties($request, $totalItems, $offset, $limit);
+        $this->setProperty('items', $this->getRenderedItemList($request, $items));
+
+        return $this;
+    }
+
+    private function prepareCollectionRequest(Request $request, $container){
         if ($container instanceof Builder) {
             $container = new EloquentContainer($container);
 
@@ -245,12 +268,7 @@ class MasonCollection extends Document
             $offset = 0;
         }
 
-        list($items, $totalItems) = $container->getItems($limit, $offset);
-
-        $this->addPaginationProperties($request, $totalItems, $offset, $limit);
-        $this->setProperty('items', $this->getRenderedItemList($request, $items));
-
-        return $this;
+        return [$limit, $offset];
     }
 
     private function getRenderedItemList(Request $request, $rawItems)
@@ -465,7 +483,10 @@ class MasonCollection extends Document
 
         $foundOperator = false;
         foreach (self::$filterOperators as $paramCount => $operators) {
-            if (in_array($operator, $operators)) {
+            // The count($parts) is critical because an operator not followed by a colon is to be considered a value
+            // this is e.g. important for things like filters[direction]=in given that in is also an operator name so
+            // there is ambiguity here
+            if (in_array($operator, $operators) && ($paramCount === 0 || count($parts) > 0)) {
                 $foundOperator = true;
                 break;
             }
