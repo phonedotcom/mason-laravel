@@ -243,7 +243,7 @@ class MasonCollection extends Document
         return $this;
     }
 
-    private function prepareCollectionRequest(Request $request, $container){
+    private function prepareCollectionRequest(Request &$request, &$container){
         if ($container instanceof Builder) {
             $container = new EloquentContainer($container);
 
