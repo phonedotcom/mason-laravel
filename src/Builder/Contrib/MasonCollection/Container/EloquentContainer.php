@@ -43,14 +43,14 @@ class EloquentContainer implements Container
 
             case 'empty':
                 $this->query->where(function ($query) use ($column) {
-                    $query->whereIn($column, ['', 0])
+                    $query->whereIn($column, ['', '0'])
                         ->orWhereNull($column);
                 });
                 break;
 
             case 'not-empty':
                 $this->query->where(function ($query) use ($column) {
-                    $query->whereNotIn($column, ['', 0])
+                    $query->whereNotIn($column, ['', '0'])
                         ->whereNotNull($column);
                 });
                 break;
