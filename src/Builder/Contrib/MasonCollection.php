@@ -228,6 +228,18 @@ class MasonCollection extends Document
     }
 
     /**
+     * Delete the data based on the inputs
+     * @return $this
+     */
+    public function patch(Request $request = null, $container = null)
+    {
+        list($limit, $offset) = $this->prepareCollectionRequest($request, $container);
+        $ids = $container->patchItems($limit, $offset, $request->input());
+        $this->setProperty('id', $ids);
+        return $this;
+    }
+
+    /**
      * Populate the Mason document based on the inputs
      * @return $this
      */
