@@ -234,7 +234,11 @@ class MasonCollection extends Document
     public function patch(Request $request = null, $container = null)
     {
         list($limit, $offset) = $this->prepareCollectionRequest($request, $container);
-        $ids = $container->patchItems($limit, $offset, $request->input());
+        $input = $request->input();
+        if (array_key_exists('filters', $input)) {
+            unset($input['filters']);
+        }
+        $ids = $container->patchItems($limit, $offset, $input);
         $this->setProperty('id', $ids);
         return $this;
     }
